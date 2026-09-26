@@ -1,0 +1,12 @@
+'use strict';
+const fs=require('node:fs/promises'),path=require('node:path'),os=require('node:os');
+const {Collector}=require('../src/collector');
+const {defaults}=require('../src/config');
+const {atomicJson}=require('../src/util');
+const TIME='2026-09-24T03:00:00.000Z';
+function totals(input=100,output=20,cache=30,write=10,reason=5){return{input_tokens:input,output_tokens:output,cached_input_tokens:cache,cache_write_input_tokens:write,reasoning_output_tokens:reason,total_tokens:input+output};}
+function codexRows({id='s1',model='gpt-6-luna',time=TIME,input=100,output=20,cache=30,write=10,reason=5,turn='t1'}={}){const u=totals(input,output,cache,write,reason);return[{timestamp:time,type:'session_meta',payload:{id,cwd:'/projects/site',timestamp:time,model_provider:'openai'}},{timestamp:time,type:'turn_context',payload:{turn_id:turn,model,effort:'high'}},{timestamp:time,type:'event_msg',payload:{type:'token_count',info:{total_token_usage:u,last_token_usage:u,model_context_window:400000}}}];}
+function claudeRow({id='r1',input=100,output=20,cache=30,write5=10,write1=5,time=TIME,model='claude-sonnet-5',final=true}={}){return{type:'assistant',requestId:id,sessionId:'cs1',cwd:'/projects/site',timestamp:time,message:{id:'m-'+id,model,content:[{text:'PRIVATE_SENTINEL_DO_NOT_STORE'}],stop_reason:final?'end_turn':null,usage:{input_tokens:input,output_tokens:output,cache_read_input_tokens:cache,cache_creation_input_tokens:write5+write1,cache_creation:{ephemeral_5m_input_tokens:write5,ephemeral_1h_input_tokens:write1}}}};}
+function geminiRow({id='g1',input=100,output=20,thoughts=5,cache=30,tool=0,time=TIME,model='gemini-3.5-flash',total}={}){return{id,type:'gemini',timestamp:time,model,content:'PRIVATE_SENTINEL_DO_NOT_STORE',tokens:{input,output,thoughts,cached:cache,tool,total:total??input+output+thoughts+tool}};}
+async function fixture(t){const dir=await fs.mkdtemp(path.join(os.tmpdir(),'tm-test-'));t.after(()=>fs.rm(dir,{recursive:true,force:true}));const roots={};for(const p of ['codex','claude','antigravity','gemini']){roots[p]=[path.join(dir,'logs',p)];await fs.mkdir(roots[p][0],{recursive:true});}const data=path.join(dir,'data');await atomicJson(path.join(data,'config.json'),{...defaults(),roots});const c=await new Collector(data).init();return{dir,data,roots,c,file:(p,name)=>path.join(roots[p][0],name),write:async(p,name,rows)=>{const f=path.join(roots[p][0],name);await fs.writeFile(f,rows.map(r=>JSON.stringify(r)).join('\n')+'\n');return f;}};}
+module.exports={TIME,totals,codexRows,claudeRow,geminiRow,fixture};

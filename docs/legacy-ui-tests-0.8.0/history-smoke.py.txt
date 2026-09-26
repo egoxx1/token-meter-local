@@ -1,0 +1,93 @@
+"""Measurement UI smoke tests. Run only against a fresh isolated demo. Requires Python Playwright and a local Chromium binary.
+Run against an isolated `node bin/cli.js demo` instance only.
+python scripts/measurement-smoke.py /path/to/demo-data --offline --output /tmp/tm-ui
+"""
+import argparse,json,pathlib,os,urllib.request,urllib.error,urllib.parse,subprocess
+from playwright.sync_api import sync_playwright
+p=argparse.ArgumentParser();p.add_argument('data_dir');p.add_argument('--output',default='measurement-browser-results');p.add_argument('--chromium',default='/usr/bin/chromium');p.add_argument('--offline',action='store_true',help='Render app files on about:blank and bridge test fetches to the real local API without browser navigation');a=p.parse_args()
+out=pathlib.Path(a.output);out.mkdir(parents=True,exist_ok=True)
+r=json.loads(pathlib.Path(a.data_dir,'runtime.json').read_text())
+if not r.get('demo'):raise SystemExit('Refusing non-demo instance')
+browser_origin=r['origin']
+url=browser_origin+'/#key='+r['token'];checks=[];errors=[];console_errors=[];requests=[]
+def passed(name):checks.append(name)
+with sync_playwright() as pw:
+    browser=pw.chromium.launch(executable_path=a.chromium,args=['--no-sandbox'],headless=True)
+    page=browser.new_page(viewport={'width':1440,'height':1050},device_scale_factor=1)
+    page.on('pageerror',lambda e:errors.append(str(e)))
+    page.on('console',lambda m:console_errors.append(m.text) if m.type=='error' else None)
+    page.on('request',lambda q:requests.append(q.url))
+    if a.offline:
+        web=pathlib.Path(__file__).resolve().parent.parent/'web'
+        html=(web/'index.html').read_text().replace('<link rel="stylesheet" href="/style.css">','').replace('<script defer src="/app.js"></script>','').replace('<script defer src="/measurements.js"></script>','').replace('<script defer src="/history.js"></script>','').replace('<script defer src="/rates.js"></script>','').replace('<script defer src="/data-controls.js"></script>','')
+        page.set_content(html)
+        page.add_style_tag(content=(web/'style.css').read_text())
+        def test_fetch(endpoint,options):
+            if not endpoint.startswith('/api/'): raise ValueError('Only this app API may be bridged')
+            requests.append(r['origin']+endpoint)
+            body=options.get('body')
+            headers=options.get('headers',{})
+            target=urllib.request.Request(r['origin']+endpoint,data=body.encode() if body else None,headers=headers,method=options.get('method','GET'))
+            try: response=urllib.request.urlopen(target,timeout=10)
+            except urllib.error.HTTPError as err: response=err
+            with response: return {'body':response.read().decode(),'status':response.status,'headers':dict(response.headers)}
+        page.expose_function('__tmTestFetch',test_fetch)
+        page.evaluate('''token=>{Object.defineProperty(window,'sessionStorage',{value:{getItem:()=>token,setItem(){}}});window.fetch=async(endpoint,options={})=>{const v=await window.__tmTestFetch(endpoint,options);return new Response(v.body,{status:v.status,headers:v.headers});};}''',r['token'])
+        page.add_script_tag(content=(web/'app.js').read_text());page.add_script_tag(content=(web/'measurements.js').read_text());page.add_script_tag(content=(web/'history.js').read_text());page.add_script_tag(content=(web/'rates.js').read_text());page.add_script_tag(content=(web/'data-controls.js').read_text())
+    else: page.goto(url)
+    def api(endpoint,body=None):
+        req=urllib.request.Request(r['origin']+endpoint,data=json.dumps(body).encode() if body is not None else None,headers={'Authorization':'Bearer '+r['token'],'Content-Type':'application/json'})
+        with urllib.request.urlopen(req,timeout=30) as resp:return json.loads(resp.read())
+    page.wait_for_function("document.querySelector('#recent-table tr td')?.textContent !== '' && window.TMHistory !== undefined")
+    page.click('[data-scope="all"]')
+    cfg=api('/api/config');stamp=page.evaluate('new Date().toISOString()')
+    rows=[{'type':'assistant','requestId':'history-ui-'+str(i),'sessionId':'history-ui','timestamp':stamp,'message':{'id':'history-msg-'+str(i),'model':'claude-sonnet-5','stop_reason':'end_turn','content':[{'text':'PRIVATE_HISTORY_UI_BODY_MUST_NOT_PERSIST'}],'usage':{'input_tokens':1000+i,'output_tokens':100,'cache_read_input_tokens':50,'cache_creation_input_tokens':0}}} for i in range(135)]
+    (pathlib.Path(cfg['roots']['claude'][0])/'history-ui.jsonl').write_text('\n'.join(json.dumps(v) for v in rows)+'\n')
+    dbfile=str(pathlib.Path(cfg['roots']['antigravity'][0])/'history-ui-cases.db')
+    js="const f=require('./test/antigravity-fixtures');f.database(process.argv[1],[f.generation({model:null,enum:1319,response:'history-map',message:'history-map-msg',time:process.argv[2]}),f.generation({model:null,enum:98765,response:'history-unknown',message:'history-unknown-msg',time:process.argv[2]}),f.generation({model:'claude-opus-4-6',write:1000,response:'history-ttl',message:'history-ttl-msg',time:process.argv[2]}),f.generation({output:2000,thinking:1500,visible:1000,response:'history-split',message:'history-split-msg',time:process.argv[2]})]);"
+    subprocess.check_call(['node','-e',js,dbfile,stamp],cwd=str(pathlib.Path(__file__).resolve().parent.parent),stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+    api('/api/scan',{});page.evaluate('load()');page.wait_for_function("document.querySelector('#history-count').textContent.includes('219')")
+    assert page.locator('#app-version').inner_text()=='LOCAL / 0.8.0';assert not page.locator('#version-warning').is_visible();passed('UI and collector both report 0.8.0')
+    assert '+ ?' not in page.locator('main').inner_text();assert '계산 불가' in page.locator('#pricing-health').inner_text();assert '총액은 아직 계산할 수 없습니다' in page.locator('#pricing-reasons').inner_text();passed('Incomplete amounts show an explicit subtotal and reasons instead of question marks or fabricated total')
+    page.locator('.pricing-panel').screenshot(path=str(out/'pricing-health.png'))
+    # The history has its own filters, independent of upper totals and measurements.
+    page.select_option('#provider','codex');page.wait_for_function("document.querySelector('#record-count').textContent==='36개 기록'")
+    assert '219' in page.locator('#history-count').inner_text();passed('Usage history remains all-time/all-tools while main summary is filtered')
+    page.select_option('#provider','all');page.select_option('#history-provider','antigravity');page.fill('#history-search','1319');page.locator('#history-form button[type=submit]').click();page.wait_for_function("document.querySelectorAll('#recent-table tr').length===1 && document.querySelector('#recent-table').textContent.includes('medium')")
+    row=page.locator('#recent-table tr');assert 'gemini-3.8-flash' in row.inner_text();assert '$0.015375' in row.inner_text();assert '공개 매핑' in row.inner_text();passed('Internal ID 1319 is shown as Gemini 3.8 Flash Medium, with full six values and mapping attribution')
+    row.get_by_role('button',name='계산 근거').click();page.wait_for_function("document.querySelector('#price-detail-dialog').open")
+    text=page.locator('#price-detail-content').inner_text();assert '$0.750' in text and '$0.075' in text and '$3.750' in text;assert '2026-09-25' in text;assert 'Google 안정 규약 아님' in text
+    assert any('ai.google.dev/gemini-api/docs/pricing' in x for x in page.locator('#price-detail-content a').evaluate_all('(a)=>a.map(x=>x.href)'))
+    passed('Price detail displays official rates, source, checked date, mapping limitation and token-times-rate arithmetic')
+    page.locator('#price-detail-dialog').screenshot(path=str(out/'price-detail.png'));page.locator('[data-close="price-detail-dialog"]').click()
+    page.fill('#history-search','98765');page.locator('#history-form button[type=submit]').click();page.wait_for_function("document.querySelector('#recent-table').textContent.includes('98765')")
+    text=page.locator('#recent-table').inner_text();assert '모델 미식별' in text and '계산 불가' in text;assert '$0' not in text;passed('Unidentified model IDs stay explicit and are not converted to a false zero cost')
+    page.fill('#history-search','');page.select_option('#history-status','incomplete');page.locator('#history-form button[type=submit]').click();page.wait_for_function("document.querySelector('#recent-table').textContent.includes('캐시 쓰기 유지시간')")
+    assert page.locator('#recent-table tr').count()==2;passed('Incomplete-price filter isolates unresolved model and missing cache-TTL records')
+    page.locator('#usage-history').screenshot(path=str(out/'history-incomplete.png'))
+    page.click('#history-clear');page.wait_for_function("document.querySelectorAll('#recent-table tr').length===50")
+    initial=page.locator('#recent-table tr').evaluate_all('(rows)=>rows.map(r=>r.dataset.requestId)')
+    page.click('#history-next');page.wait_for_function("document.querySelector('#history-page').textContent==='2 페이지'")
+    second=page.locator('#recent-table tr').evaluate_all('(rows)=>rows.map(r=>r.dataset.requestId)');assert not set(initial)&set(second);passed('Next history page contains different retained requests beyond the latest 50')
+    page.evaluate('load()');page.wait_for_timeout(150);assert page.locator('#recent-table tr').evaluate_all('(rows)=>rows.map(r=>r.dataset.requestId)')==second;passed('Live status polling does not jump away from a historical page')
+    page.click('#history-prev');page.wait_for_function("document.querySelector('#history-page').textContent==='1 페이지'");assert page.locator('#recent-table tr').evaluate_all('(rows)=>rows.map(r=>r.dataset.requestId)')==initial;passed('Previous history page restores the matching request range')
+    with page.expect_download() as dl:page.click('#history-jsonl')
+    dl.value.save_as(str(out/'usage-latest.jsonl'));exported=[json.loads(l) for l in (out/'usage-latest.jsonl').read_text().splitlines()];assert len(exported)==219;assert len({e['id'] for e in exported})==219
+    assert 'PRIVATE_HISTORY_UI_BODY_MUST_NOT_PERSIST' not in (out/'usage-latest.jsonl').read_text();passed('History JSONL export contains all matching latest requests, not just the page, and no prompt bodies')
+    with page.expect_download() as dl:page.click('#history-csv')
+    dl.value.save_as(str(out/'usage.csv'));assert 'priceReasons' in (out/'usage.csv').read_text();passed('History CSV export includes price states and reason fields')
+    assert '월별 JSONL' in page.locator('#history-storage-path').inner_text();assert '219개' in page.locator('#history-storage-status').inner_text();passed('Persistent journal location and unique-request counts are visible')
+    # Verify that real journal bytes contain metadata only.
+    journals=list(pathlib.Path(cfg['dataDir'],'usage-log').glob('*.jsonl'));assert journals
+    assert all('PRIVATE_HISTORY_UI_BODY_MUST_NOT_PERSIST' not in p.read_text() for p in journals);passed('Actual monthly journal is created on disk without the synthetic prompt sentinel')
+    page.click('#reanalyse-antigravity');page.wait_for_function("!document.querySelector('#reanalyse-antigravity').disabled");assert api('/api/history')['totalStored']==219;passed('Reanalysis action preserves unique request count')
+    page.evaluate('window.scrollTo(0,0)');page.screenshot(path=str(out/'dashboard.png'),full_page=False)
+    page.select_option('#history-provider','antigravity');page.locator('#history-form button[type=submit]').click();page.wait_for_function("document.querySelectorAll('#recent-table tr').length===12")
+    page.locator('#usage-history').screenshot(path=str(out/'history.png'))
+    for width in (375,430,768,1280,1440):
+        page.set_viewport_size({'width':width,'height':1050});assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
+    passed('New price/history controls have no horizontal page overflow at five viewport sizes')
+    assert not errors,errors;passed('No JavaScript runtime errors in new price/history interactions')
+    browser.close()
+report={'checksPassed':len(checks),'checks':checks,'javascriptErrors':errors,'transport':'about:blank app files + authenticated loopback fetch bridge' if a.offline else 'direct localhost','data':'Synthetic CLI JSONL and actual temporary SQLite files. No real account or user database.','limitations':['Not a real VS Code installation or OS PiP test','Direct browser navigation is blocked by runner policy; browser CSP navigation not verified']}
+(out/'history-report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2));print(json.dumps(report,ensure_ascii=False,indent=2))

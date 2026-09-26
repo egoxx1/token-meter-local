@@ -1,0 +1,18 @@
+{
+  "schema": "token-meter.usage.v1",
+  "format": "openai",
+  "modelProvider": "openrouter",
+  "model": "qwen/qwen3.8-max-prime",
+  "requestId": "example-unique-request-0001",
+  "sessionId": "example-project-session",
+  "timestamp": "2026-09-25T00:00:00.000Z",
+  "project": "/projects/example",
+  "modality": "text",
+  "usage": {
+    "prompt_tokens": 1000,
+    "completion_tokens": 200,
+    "prompt_tokens_details": {"cached_tokens": 400},
+    "completion_tokens_details": {"reasoning_tokens": 50},
+    "total_tokens": 1200
+  }
+}

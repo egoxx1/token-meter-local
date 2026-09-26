@@ -1,0 +1,80 @@
+"""Model/rate identity and catalog unit UI smoke tests. Run only against a fresh isolated demo. Requires Python Playwright and a local Chromium binary.
+Run against an isolated `node bin/cli.js demo` instance only.
+python scripts/rate-binding-smoke.py /path/to/demo-data --offline --output /tmp/tm-ui
+"""
+import argparse,json,pathlib,os,urllib.request,urllib.error,urllib.parse,subprocess,re
+from playwright.sync_api import sync_playwright
+p=argparse.ArgumentParser();p.add_argument('data_dir');p.add_argument('--output',default='measurement-browser-results');p.add_argument('--chromium',default='/usr/bin/chromium');p.add_argument('--offline',action='store_true',help='Render app files on about:blank and bridge test fetches to the real local API without browser navigation');a=p.parse_args()
+out=pathlib.Path(a.output);out.mkdir(parents=True,exist_ok=True)
+r=json.loads(pathlib.Path(a.data_dir,'runtime.json').read_text())
+if not r.get('demo'):raise SystemExit('Refusing non-demo instance')
+browser_origin=r['origin']
+url=browser_origin+'/#key='+r['token'];checks=[];errors=[];console_errors=[];requests=[]
+def passed(name):checks.append(name)
+with sync_playwright() as pw:
+    browser=pw.chromium.launch(executable_path=a.chromium,args=['--no-sandbox'],headless=True)
+    page=browser.new_page(viewport={'width':1440,'height':1050},device_scale_factor=1)
+    page.on('pageerror',lambda e:errors.append(str(e)))
+    page.on('console',lambda m:console_errors.append(m.text) if m.type=='error' else None)
+    page.on('request',lambda q:requests.append(q.url))
+    if a.offline:
+        web=pathlib.Path(__file__).resolve().parent.parent/'web'
+        html=(web/'index.html').read_text().replace('<link rel="stylesheet" href="/style.css">','').replace('<script defer src="/app.js"></script>','').replace('<script defer src="/measurements.js"></script>','').replace('<script defer src="/history.js"></script>','').replace('<script defer src="/rates.js"></script>','').replace('<script defer src="/data-controls.js"></script>','')
+        page.set_content(html)
+        page.add_style_tag(content=(web/'style.css').read_text())
+        def test_fetch(endpoint,options):
+            if not endpoint.startswith('/api/'): raise ValueError('Only this app API may be bridged')
+            requests.append(r['origin']+endpoint)
+            body=options.get('body')
+            headers=options.get('headers',{})
+            target=urllib.request.Request(r['origin']+endpoint,data=body.encode() if body else None,headers=headers,method=options.get('method','GET'))
+            try: response=urllib.request.urlopen(target,timeout=10)
+            except urllib.error.HTTPError as err: response=err
+            with response: return {'body':response.read().decode(),'status':response.status,'headers':dict(response.headers)}
+        page.expose_function('__tmTestFetch',test_fetch)
+        page.evaluate('''token=>{Object.defineProperty(window,'sessionStorage',{value:{getItem:()=>token,setItem(){}}});window.fetch=async(endpoint,options={})=>{const v=await window.__tmTestFetch(endpoint,options);return new Response(v.body,{status:v.status,headers:v.headers});};}''',r['token'])
+        page.add_script_tag(content=(web/'app.js').read_text());page.add_script_tag(content=(web/'measurements.js').read_text());page.add_script_tag(content=(web/'history.js').read_text());page.add_script_tag(content=(web/'rates.js').read_text());page.add_script_tag(content=(web/'data-controls.js').read_text())
+    else: page.goto(url)
+    def api(endpoint,body=None):
+        req=urllib.request.Request(r['origin']+endpoint,data=json.dumps(body).encode() if body is not None else None,headers={'Authorization':'Bearer '+r['token'],'Content-Type':'application/json'})
+        with urllib.request.urlopen(req,timeout=30) as resp:return json.loads(resp.read())
+    page.wait_for_function("document.querySelector('#connection').textContent==='로컬 수집 중' && window.TMRates !== undefined")
+    page.click('[data-scope="all"]');page.wait_for_function("document.querySelector('#record-count').textContent==='80개 기록'")
+    assert page.locator('#app-version').inner_text()=='LOCAL / 0.8.0';assert not page.locator('#version-warning').is_visible();passed('UI and collector version agree at 0.8.0')
+    before=page.locator('#total-cost').inner_text()
+    page.select_option('#rate-unit-select','1000');page.click('#catalog-button');page.fill('#catalog-search','gpt-6-sol')
+    rows=page.locator('#catalog-models tr').filter(has=page.locator('.model-name',has_text=re.compile(r'^gpt-6-sol$')))
+    assert rows.count()==3
+    standard=rows.filter(has=page.locator('.catalog-tier',has_text='standard'))
+    assert standard.count()==1
+    assert standard.locator('td').nth(1).inner_text()=='$2.00';assert standard.locator('td').nth(2).inner_text()=='$0.20';assert standard.locator('td').nth(3).inner_text()=='$2.50';assert standard.locator('td').nth(4).inner_text()=='$10.00'
+    passed('Catalog stays consistently per million in ALL columns after applied-rate panel switches to per 1,000')
+    for tier in ['batch','flex']:
+        row=rows.filter(has=page.locator('.catalog-tier',has_text=tier));assert row.count()==1;assert row.locator('td').nth(1).inner_text()=='$1.00';assert row.locator('td').nth(4).inner_text()=='$5.00'
+    passed('Standard, Batch and Flex are explicitly distinguished instead of unlabeled duplicate model prices')
+    page.locator('#catalog-dialog').screenshot(path=str(out/'catalog-modes.png'));page.locator('[data-close="catalog-dialog"]').click()
+    assert page.locator('#total-cost').inner_text()==before;passed('Unit/mode inspection cannot mutate total usage cost')
+    page.select_option('#rate-unit-select','1000000')
+    # Add one synthetic dated request through the real ingestion API; no external model call.
+    api('/api/usage',{'schema':'token-meter.usage.v1','format':'normalized','requestId':'rate-alias-ui','timestamp':page.evaluate('new Date().toISOString()'),'modelProvider':'openai','model':'gpt-6-sol-2026-09-24','modality':'text','usage':{'input':100,'cacheRead':0,'cacheWriteUnknown':0,'output':20,'thinkingOutput':5}})
+    page.evaluate('load()');page.wait_for_function("document.querySelector('#record-count').textContent==='81개 기록'")
+    row=page.locator('#model-table tr').filter(has_text='gpt-6-sol-2026-09-24');row.locator('.api-rate-button').click()
+    text=page.locator('#rate-detail-content').inner_text();assert '관측 모델: gpt-6-sol-2026-09-24' in text;assert '가격표 모델: gpt-6-sol' in text;assert '날짜 버전 → 기본 모델 단가' in text
+    passed('Dated observed model and actual base tariff model are shown separately with alias match evidence')
+    page.locator('#rate-detail-dialog').screenshot(path=str(out/'binding-detail.png'));page.locator('[data-close="rate-detail-dialog"]').click()
+    page.click('#rate-audit-button');page.wait_for_function("document.querySelector('#rate-audit-dialog').open")
+    summary=page.locator('#rate-audit-summary').inner_text();assert '검사 81 / 81건' in summary;assert '불일치 0' in summary
+    assert page.locator('#rate-audit-table tr').count()==81;passed('Read-only audit covers all synthetic records and separates unavailable prices from mismatches')
+    assert page.evaluate("document.querySelector('#rate-audit-table tr td:last-child').getBoundingClientRect().right<=document.querySelector('#rate-audit-dialog').getBoundingClientRect().right");passed('Desktop audit table shows prices alongside model identity without requiring horizontal scroll')
+    with page.expect_download() as dl:page.click('#rate-audit-export')
+    dl.value.save_as(str(out/'audit.json'));report=json.loads((out/'audit.json').read_text());assert report['schema']=='token-meter.rate-audit.v1';assert report['complete'];assert report['counts']['mismatch']==0;assert 'Bearer' not in json.dumps(report)
+    passed('Diagnostic JSON exports model/tariff matching without bearer credentials or conversation bodies')
+    page.locator('#rate-audit-dialog').screenshot(path=str(out/'rate-audit.png'));page.locator('[data-close="rate-audit-dialog"]').click()
+    page.evaluate('window.scrollTo(0,0)');page.screenshot(path=str(out/'desktop.png'),full_page=False)
+    for width in (375,768,1440):
+        page.set_viewport_size({'width':width,'height':1050});assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
+    passed('Audit controls and panels do not overflow the page at mobile, tablet and desktop widths')
+    assert not errors,errors;passed('No JavaScript runtime errors in rate matching and catalog interactions')
+    browser.close()
+report={'checksPassed':len(checks),'checks':checks,'javascriptErrors':errors,'transport':'about:blank app render + authenticated loopback HTTP bridge' if a.offline else 'direct localhost','data':'80 demo requests plus one synthetic dated-model API import','limitations':['No user source logs or billing account','No real VS Code installation/macOS/Windows','Offline render does not test browser navigation/CSP']}
+(out/'rate-binding-report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2));print(json.dumps(report,ensure_ascii=False,indent=2))

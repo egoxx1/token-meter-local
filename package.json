@@ -1,0 +1,200 @@
+{
+  "name": "token-meter-local",
+  "displayName": "Token Meter Local",
+  "description": "호출 단위 수집·초기화 경계 복구·세션 대조와 네 항목 API 환산 명세",
+	"version": "0.10.1",
+  "publisher": "local-token-meter",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.95.0",
+    "node": ">=20"
+  },
+  "main": "./src/extension.js",
+  "bin": {
+    "token-meter": "bin/cli.js"
+  },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "extensionKind": [
+    "workspace"
+  ],
+  "categories": [
+    "Other"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": true
+    },
+    "virtualWorkspaces": false
+  },
+  "scripts": {
+    "start": "node bin/cli.js serve --open",
+    "demo": "node bin/cli.js demo --open",
+    "test": "node --test test/*.test.js",
+    "check": "node scripts/check.js",
+    "package": "python3 scripts/package.py",
+    "test:ui": "python3 scripts/billing-smoke.py"
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "tokenMeter.dashboard",
+        "title": "Token Meter: Open Dashboard"
+      },
+      {
+        "command": "tokenMeter.scope",
+        "title": "Token Meter: Change Status Bar Scope"
+      },
+      {
+        "command": "tokenMeter.provider",
+        "title": "Token Meter: Change Status Bar Provider"
+      },
+      {
+        "command": "tokenMeter.config",
+        "title": "Token Meter: Open Configuration"
+      },
+      {
+        "command": "tokenMeter.prices",
+        "title": "Token Meter: Open Custom Prices"
+      },
+      {
+        "command": "tokenMeter.restart",
+        "title": "Token Meter: Restart Collector"
+      },
+      {
+        "command": "tokenMeter.stop",
+        "title": "Token Meter: Stop Collector"
+      },
+      {
+        "command": "tokenMeter.refreshPrices",
+        "title": "Token Meter: Refresh Model Prices"
+      },
+      {
+        "command": "tokenMeter.checkUpdates",
+        "title": "Token Meter: Check Application Updates"
+      },
+      {
+        "command": "tokenMeter.installUpdate",
+        "title": "Token Meter: Install Verified Update"
+      },
+      {
+        "command": "tokenMeter.antigravityDiagnostics",
+        "title": "Token Meter: Antigravity Diagnostics"
+      },
+      {
+        "command": "tokenMeter.measurements",
+        "title": "Token Meter: Measurement Actions"
+      },
+      {
+        "command": "tokenMeter.startMeasurement",
+        "title": "Token Meter: Start Named Measurement"
+      },
+      {
+        "command": "tokenMeter.resetMeasurement",
+        "title": "Token Meter: Reset Tool or Model Meter"
+      },
+      {
+        "command": "tokenMeter.stopMeasurement",
+        "title": "Token Meter: Stop and Save Measurement"
+      },
+      {
+        "command": "tokenMeter.pinMeasurement",
+        "title": "Token Meter: Pin Measurement to Status Bar"
+      },
+      {
+        "command": "tokenMeter.undoReset",
+        "title": "Token Meter: Undo Last Meter Reset"
+      },
+      {
+        "command": "tokenMeter.openUsageLogFolder",
+        "title": "Token Meter: Open Usage Log Folder"
+      },
+      {
+        "command": "tokenMeter.reanalyseAntigravity",
+        "title": "Token Meter: Reanalyse Antigravity Records"
+      },
+      {
+        "command": "tokenMeter.deleteMeasurement",
+        "title": "Token Meter: Delete Measurement"
+      },
+      {
+        "command": "tokenMeter.clearMeasurements",
+        "title": "Token Meter: Delete All Measurements"
+      },
+      {
+        "command": "tokenMeter.resetAllData",
+        "title": "Token Meter: Reset All Usage Data"
+      },
+      {
+        "command": "tokenMeter.collectionDiagnostics",
+        "title": "Token Meter: Collection Diagnostics (Safe JSON)"
+      }
+    ],
+    "configuration": {
+      "title": "Token Meter",
+      "properties": {
+        "tokenMeter.enabled": {
+          "type": "boolean",
+          "default": true,
+          "scope": "machine",
+          "description": "Start a local read-only log collector and show the status bar."
+        },
+        "tokenMeter.scope": {
+          "type": "string",
+          "enum": [
+            "today",
+            "month",
+            "all",
+            "session"
+          ],
+          "default": "today",
+          "scope": "machine",
+          "description": "Status bar accumulation range. Session means the most recently observed session."
+        },
+        "tokenMeter.provider": {
+          "type": "string",
+          "enum": [
+            "all",
+            "codex",
+            "claude",
+            "antigravity",
+            "gemini",
+            "generic"
+          ],
+          "default": "all",
+          "scope": "machine",
+          "description": "Filter the status bar by tool."
+        },
+        "tokenMeter.dataDirectory": {
+          "type": "string",
+          "default": "",
+          "scope": "machine",
+          "description": "Absolute private data directory; empty uses ~/.token-meter. For WSL / SSH install the extension in the host where the CLI logs exist."
+        },
+        "tokenMeter.autoInstallUpdates": {
+          "type": "boolean",
+          "default": false,
+          "scope": "machine",
+          "description": "Automatically install a signature-verified update from your locally configured trusted release feed. Reload remains manual."
+        },
+        "tokenMeter.tokenDisplay": {
+          "type": "string",
+          "enum": [
+            "compact",
+            "exact"
+          ],
+          "default": "compact",
+          "scope": "machine",
+          "description": "Compact (1.20M) or exact token counts. IN (ordinary), CACHE READ, CACHE WRITE, OUT (including thinking), TOTAL and their costs are shown; tooltip includes tariffs."
+        },
+        "tokenMeter.followPinnedMeasurement": {
+          "type": "boolean",
+          "default": true,
+          "scope": "machine",
+          "description": "Show the explicitly pinned measurement instead of the normal period/tool filter. Pinning never resets accumulated usage."
+        }
+      }
+    }
+  }
+}

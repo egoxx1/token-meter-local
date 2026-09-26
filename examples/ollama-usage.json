@@ -1,0 +1,11 @@
+{
+  "schema": "token-meter.usage.v1",
+  "format": "ollama",
+  "modelProvider": "ollama",
+  "model": "your-local-model",
+  "requestId": "example-unique-local-0001",
+  "timestamp": "2026-09-25T00:00:00.000Z",
+  "modality": "text",
+  "local": true,
+  "usage": {"prompt_eval_count": 1000, "eval_count": 200}
+}

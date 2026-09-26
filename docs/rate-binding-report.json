@@ -1,0 +1,23 @@
+{
+  "checksPassed": 10,
+  "checks": [
+    "UI and collector version agree at 0.7.1",
+    "Catalog stays consistently per million in ALL columns after applied-rate panel switches to per 1,000",
+    "Standard, Batch and Flex are explicitly distinguished instead of unlabeled duplicate model prices",
+    "Unit/mode inspection cannot mutate total usage cost",
+    "Dated observed model and actual base tariff model are shown separately with alias match evidence",
+    "Read-only audit covers all synthetic records and separates unavailable prices from mismatches",
+    "Desktop audit table shows prices alongside model identity without requiring horizontal scroll",
+    "Diagnostic JSON exports model/tariff matching without bearer credentials or conversation bodies",
+    "Audit controls and panels do not overflow the page at mobile, tablet and desktop widths",
+    "No JavaScript runtime errors in rate matching and catalog interactions"
+  ],
+  "javascriptErrors": [],
+  "transport": "about:blank app render + authenticated loopback HTTP bridge",
+  "data": "80 demo requests plus one synthetic dated-model API import",
+  "limitations": [
+    "No user source logs or billing account",
+    "No real VS Code installation/macOS/Windows",
+    "Offline render does not test browser navigation/CSP"
+  ]
+}

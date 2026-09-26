@@ -1,0 +1,24 @@
+{
+  "passed": 16,
+  "checks": [
+    "User-provided aggregate reproduced with ten synthetic requests: 2,469,356 tokens / $0.7844112 reference cost",
+    "Header and collector versions agree; overview reuses real API summary and reference status",
+    "Absent write counter shows unreported / cannot split, while the applicable unit rate remains visible",
+    "Fixed status bar no longer presents an absent counter as zero-dollar spend",
+    "Cache help explains model output, local file edits, and future prompt caching without changing usage",
+    "TTL detail uses unreported rather than fabricating three zero cache-write counters",
+    "375px: responsive overview and four billing rows retain evidence and no page overflow",
+    "430px: responsive overview and four billing rows retain evidence and no page overflow",
+    "768px: responsive overview and four billing rows retain evidence and no page overflow",
+    "1280px: responsive overview and four billing rows retain evidence and no page overflow",
+    "1440px: responsive overview and four billing rows retain evidence and no page overflow",
+    "Separate-document PiP renderer preserves missing-counter evidence; OS topmost behavior not tested",
+    "An explicit zero stays a real reported zero, distinct from an absent field",
+    "A reported 2,000-token cache write is displayed and priced once at $2.50 / 1M",
+    "Mixed reported/missing requests show observed subtotal, not full-coverage cache-write usage",
+    "No uncaught JavaScript errors in preview and cache-evidence flows"
+  ],
+  "errors": [],
+  "synthetic": true,
+  "mode": "restricted-render-bridge"
+}

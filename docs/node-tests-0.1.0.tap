@@ -1,0 +1,406 @@
+TAP version 13
+# Subtest: Repeated scan, duplicate files and process restart do not multiply usage
+ok 1 - Repeated scan, duplicate files and process restart do not multiply usage
+  ---
+  duration_ms: 188.94183
+  type: 'test'
+  ...
+# Subtest: Incremental reader processes only appended bytes
+ok 2 - Incremental reader processes only appended bytes
+  ---
+  duration_ms: 58.596892
+  type: 'test'
+  ...
+# Subtest: Unfinished UTF-8 JSONL line is reread without persisting raw bytes
+ok 3 - Unfinished UTF-8 JSONL line is reread without persisting raw bytes
+  ---
+  duration_ms: 47.75562
+  type: 'test'
+  ...
+# Subtest: Claude streaming duplicates keep the fullest observation once
+ok 4 - Claude streaming duplicates keep the fullest observation once
+  ---
+  duration_ms: 50.497173
+  type: 'test'
+  ...
+# Subtest: Same total with newly known TTL fills incomplete cost
+ok 5 - Same total with newly known TTL fills incomplete cost
+  ---
+  duration_ms: 29.37491
+  type: 'test'
+  ...
+# Subtest: Gemini JSON snapshot replacement updates a message rather than duplicating
+ok 6 - Gemini JSON snapshot replacement updates a message rather than duplicating
+  ---
+  duration_ms: 49.995225
+  type: 'test'
+  ...
+# Subtest: Gemini JSONL metadata and token record are collected
+ok 7 - Gemini JSONL metadata and token record are collected
+  ---
+  duration_ms: 13.854779
+  type: 'test'
+  ...
+# Subtest: Ledger, checkpoints and CSV contain no prompt/response content
+ok 8 - Ledger, checkpoints and CSV contain no prompt/response content
+  ---
+  duration_ms: 17.435314
+  type: 'test'
+  ...
+# Subtest: Completed malformed JSON remains diagnosed on later scans
+ok 9 - Completed malformed JSON remains diagnosed on later scans
+  ---
+  duration_ms: 19.800071
+  type: 'test'
+  ...
+# Subtest: Symlinked logs and roots are not followed
+ok 10 - Symlinked logs and roots are not followed
+  ---
+  duration_ms: 20.331088
+  type: 'test'
+  ...
+# Subtest: Deleted logs do not erase observed historical spending
+ok 11 - Deleted logs do not erase observed historical spending
+  ---
+  duration_ms: 13.428354
+  type: 'test'
+  ...
+# Subtest: Known prices remain frozen; unsupported model is filled by custom price
+ok 12 - Known prices remain frozen; unsupported model is filled by custom price
+  ---
+  duration_ms: 27.460339
+  type: 'test'
+  ...
+# Subtest: Concurrent saves preserve the latest coherent state
+ok 13 - Concurrent saves preserve the latest coherent state
+  ---
+  duration_ms: 8.478033
+  type: 'test'
+  ...
+# Subtest: Task intervals start inclusive and end exclusive
+ok 14 - Task intervals start inclusive and end exclusive
+  ---
+  duration_ms: 15.598821
+  type: 'test'
+  ...
+# Subtest: Asia/Seoul daily boundary is correct and input/output sums balance
+ok 15 - Asia/Seoul daily boundary is correct and input/output sums balance
+  ---
+  duration_ms: 21.603905
+  type: 'test'
+  ...
+# Subtest: Missing timestamp belongs only to all-time usage
+ok 16 - Missing timestamp belongs only to all-time usage
+  ---
+  duration_ms: 24.319658
+  type: 'test'
+  ...
+# Subtest: Corrupt ledger is refused, never reset to zero
+ok 17 - Corrupt ledger is refused, never reset to zero
+  ---
+  duration_ms: 8.512904
+  type: 'test'
+  ...
+# Subtest: VS Code adapter mock: activation, status, dashboard, filters and disposal
+ok 18 - VS Code adapter mock: activation, status, dashboard, filters and disposal
+  ---
+  duration_ms: 326.050044
+  type: 'test'
+  ...
+# Subtest: Codex: input cache categories are disjoint; reasoning is an output subset
+ok 19 - Codex: input cache categories are disjoint; reasoning is an output subset
+  ---
+  duration_ms: 10.20485
+  type: 'test'
+  ...
+# Subtest: Codex: repeated cumulative snapshot produces no second delta
+ok 20 - Codex: repeated cumulative snapshot produces no second delta
+  ---
+  duration_ms: 2.846473
+  type: 'test'
+  ...
+# Subtest: Codex: model switch attributes only subsequent delta to new model
+ok 21 - Codex: model switch attributes only subsequent delta to new model
+  ---
+  duration_ms: 1.33228
+  type: 'test'
+  ...
+# Subtest: Codex: counter rollback is re-baselined, not a new bill
+ok 22 - Codex: counter rollback is re-baselined, not a new bill
+  ---
+  duration_ms: 1.492379
+  type: 'test'
+  ...
+# Subtest: Codex: inherited fork history is excluded before fork timestamp
+ok 23 - Codex: inherited fork history is excluded before fork timestamp
+  ---
+  duration_ms: 0.623558
+  type: 'test'
+  ...
+# Subtest: Codex: historical aggregate with missing prior turns is unassigned
+ok 24 - Codex: historical aggregate with missing prior turns is unassigned
+  ---
+  duration_ms: 1.075693
+  type: 'test'
+  ...
+# Subtest: Codex: cache greater than input is flagged
+ok 25 - Codex: cache greater than input is flagged
+  ---
+  duration_ms: 0.624908
+  type: 'test'
+  ...
+# Subtest: Codex: malformed usage increments a durable diagnostic
+ok 26 - Codex: malformed usage increments a durable diagnostic
+  ---
+  duration_ms: 0.330803
+  type: 'test'
+  ...
+# Subtest: Codex: parent metadata labels subagent
+ok 27 - Codex: parent metadata labels subagent
+  ---
+  duration_ms: 0.875998
+  type: 'test'
+  ...
+# Subtest: Claude: input total includes each cache category once
+ok 28 - Claude: input total includes each cache category once
+  ---
+  duration_ms: 2.963249
+  type: 'test'
+  ...
+# Subtest: Claude: cache TTL omission remains unknown, not assumed 5m
+ok 29 - Claude: cache TTL omission remains unknown, not assumed 5m
+  ---
+  duration_ms: 0.419993
+  type: 'test'
+  ...
+# Subtest: Claude: message ID provides fallback without requestId
+ok 30 - Claude: message ID provides fallback without requestId
+  ---
+  duration_ms: 0.262034
+  type: 'test'
+  ...
+# Subtest: Claude: missing identifiers are not invented and are counted
+ok 31 - Claude: missing identifiers are not invented and are counted
+  ---
+  duration_ms: 0.31344
+  type: 'test'
+  ...
+# Subtest: Claude: streaming placeholder is marked non-final
+ok 32 - Claude: streaming placeholder is marked non-final
+  ---
+  duration_ms: 0.218443
+  type: 'test'
+  ...
+# Subtest: Claude: subagent file and metadata are classified
+ok 33 - Claude: subagent file and metadata are classified
+  ---
+  duration_ms: 0.185671
+  type: 'test'
+  ...
+# Subtest: Gemini: reasoning is added once to billed output
+ok 34 - Gemini: reasoning is added once to billed output
+  ---
+  duration_ms: 1.19303
+  type: 'test'
+  ...
+# Subtest: Gemini: tool input added only when total confirms separate usage
+ok 35 - Gemini: tool input added only when total confirms separate usage
+  ---
+  duration_ms: 0.295896
+  type: 'test'
+  ...
+# Subtest: Gemini: ambiguous tool accounting is flagged for partial pricing
+ok 36 - Gemini: ambiguous tool accounting is flagged for partial pricing
+  ---
+  duration_ms: 0.232216
+  type: 'test'
+  ...
+# Subtest: Gemini: legacy snapshot metadata works
+ok 37 - Gemini: legacy snapshot metadata works
+  ---
+  duration_ms: 0.263817
+  type: 'test'
+  ...
+# Subtest: Gemini: JSONL metadata and updates work; rewind is not a refund
+ok 38 - Gemini: JSONL metadata and updates work; rewind is not a refund
+  ---
+  duration_ms: 0.264622
+  type: 'test'
+  ...
+# Subtest: Parser output and state contain no prompt or content body
+ok 39 - Parser output and state contain no prompt or content body
+  ---
+  duration_ms: 0.410577
+  type: 'test'
+  ...
+# Subtest: Missing time is not silently assigned to another request time
+ok 40 - Missing time is not silently assigned to another request time
+  ---
+  duration_ms: 0.629627
+  type: 'test'
+  ...
+# Subtest: Exact integer cost: GPT-6 Luna cache and output buckets
+ok 41 - Exact integer cost: GPT-6 Luna cache and output buckets
+  ---
+  duration_ms: 10.175476
+  type: 'test'
+  ...
+# Subtest: Exact integer cost: Claude cache TTL prices
+ok 42 - Exact integer cost: Claude cache TTL prices
+  ---
+  duration_ms: 1.564113
+  type: 'test'
+  ...
+# Subtest: Unknown model is not shown as free
+ok 43 - Unknown model is not shown as free
+  ---
+  duration_ms: 0.999663
+  type: 'test'
+  ...
+# Subtest: Unknown Claude cache TTL leaves output priced and total incomplete
+ok 44 - Unknown Claude cache TTL leaves output priced and total incomplete
+  ---
+  duration_ms: 0.883822
+  type: 'test'
+  ...
+# Subtest: Reasoning effort is metadata, not a price multiplier
+ok 45 - Reasoning effort is metadata, not a price multiplier
+  ---
+  duration_ms: 1.030202
+  type: 'test'
+  ...
+# Subtest: Fast mode applies only where a rate exists
+ok 46 - Fast mode applies only where a rate exists
+  ---
+  duration_ms: 4.148663
+  type: 'test'
+  ...
+# Subtest: Only exact models and date-version suffixes match
+ok 47 - Only exact models and date-version suffixes match
+  ---
+  duration_ms: 1.197013
+  type: 'test'
+  ...
+# Subtest: External provider does not silently inherit a first-party rate
+ok 48 - External provider does not silently inherit a first-party rate
+  ---
+  duration_ms: 1.029021
+  type: 'test'
+  ...
+# Subtest: Custom zero price is permitted but missing price is not zero
+ok 49 - Custom zero price is permitted but missing price is not zero
+  ---
+  duration_ms: 1.111418
+  type: 'test'
+  ...
+# Subtest: Custom effective date prevents applying future prices to older records
+ok 50 - Custom effective date prevents applying future prices to older records
+  ---
+  duration_ms: 1.155764
+  type: 'test'
+  ...
+# Subtest: Final streaming snapshot reevaluates long-context tier against frozen base rule
+ok 51 - Final streaming snapshot reevaluates long-context tier against frozen base rule
+  ---
+  duration_ms: 1.26978
+  type: 'test'
+  ...
+# Subtest: Stored rate is immutable when a price file changes
+ok 52 - Stored rate is immutable when a price file changes
+  ---
+  duration_ms: 0.703428
+  type: 'test'
+  ...
+# Subtest: Invalid custom rate schemas are rejected
+ok 53 - Invalid custom rate schemas are rejected
+  ---
+  duration_ms: 1.940191
+  type: 'test'
+  ...
+# Subtest: Contradictory totals cause incomplete pricing
+ok 54 - Contradictory totals cause incomplete pricing
+  ---
+  duration_ms: 0.474124
+  type: 'test'
+  ...
+# Subtest: HTTP status matches local ledger and is private and non-cacheable
+ok 55 - HTTP status matches local ledger and is private and non-cacheable
+  ---
+  duration_ms: 211.443817
+  type: 'test'
+  ...
+# Subtest: Unauthenticated and invalid bearer API reads are rejected
+ok 56 - Unauthenticated and invalid bearer API reads are rejected
+  ---
+  duration_ms: 52.764817
+  type: 'test'
+  ...
+# Subtest: Cross-origin local requests are rejected even with the bearer token
+ok 57 - Cross-origin local requests are rejected even with the bearer token
+  ---
+  duration_ms: 39.534354
+  type: 'test'
+  ...
+# Subtest: Host checks reject DNS-rebinding style requests
+ok 58 - Host checks reject DNS-rebinding style requests
+  ---
+  duration_ms: 89.417262
+  type: 'test'
+  ...
+# Subtest: Static shell contains no secret and rejects traversal or unsupported methods
+ok 59 - Static shell contains no secret and rejects traversal or unsupported methods
+  ---
+  duration_ms: 81.227042
+  type: 'test'
+  ...
+# Subtest: Settings validate values and refuse filesystem path changes through HTTP
+ok 60 - Settings validate values and refuse filesystem path changes through HTTP
+  ---
+  duration_ms: 86.199161
+  type: 'test'
+  ...
+# Subtest: Parallel price updates are serialized without losing either entry
+ok 61 - Parallel price updates are serialized without losing either entry
+  ---
+  duration_ms: 55.070258
+  type: 'test'
+  ...
+# Subtest: Task API supports one active interval and persists ending it
+ok 62 - Task API supports one active interval and persists ending it
+  ---
+  duration_ms: 39.9622
+  type: 'test'
+  ...
+# Subtest: Exports are authorized, scoped and do not include raw message bodies
+ok 63 - Exports are authorized, scoped and do not include raw message bodies
+  ---
+  duration_ms: 32.811868
+  type: 'test'
+  ...
+# Subtest: One collector per data directory; graceful close removes runtime and lock
+ok 64 - One collector per data directory; graceful close removes runtime and lock
+  ---
+  duration_ms: 23.637533
+  type: 'test'
+  ...
+# Subtest: Empty source is no records, not a verified zero bill
+ok 65 - Empty source is no records, not a verified zero bill
+  ---
+  duration_ms: 18.240039
+  type: 'test'
+  ...
+# Subtest: Config and CSV sanitization reject unsafe or ambiguous values
+ok 66 - Config and CSV sanitization reject unsafe or ambiguous values
+  ---
+  duration_ms: 1.520766
+  type: 'test'
+  ...
+1..66
+# tests 66
+# suites 0
+# pass 66
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1743.005822

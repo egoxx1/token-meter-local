@@ -1,0 +1,1 @@
+Historical layout-specific UI scripts from 0.8.0. These reference the old IN/OUT/THINKING card layout and are retained as text, not current executable checks. Current acceptance suites: scripts/billing-smoke.py and scripts/data-reset-smoke.py. Prior reports are historical, not a claim that all old UI assertions passed against 0.9.0.

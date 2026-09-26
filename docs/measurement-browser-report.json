@@ -1,0 +1,32 @@
+{
+  "checksPassed": 20,
+  "checks": [
+    "Provider reset displays zero input/output/total and three prices, preserving raw cumulative usage",
+    "Undo restores original provider display and retains cancelled measurement history",
+    "Model row reset targets provider, billing service, exact model, effort and role",
+    "New real synthetic Codex log increases only the reset model meter with IN 8,000 OUT 600 TOTAL 8,600",
+    "A newer provider-wide reset also resets visible model rows through baseline inheritance",
+    "Cumulative vs measurement row display can be toggled without deleting either set of data",
+    "Named measurement form starts at zero and explicitly disables unrelated global filters",
+    "Antigravity native SQLite record populates all six values and per-measurement budget warning",
+    "Pin selection is exposed to VS Code via authenticated followPinned status",
+    "End and save freezes the entire measured result across later log collection",
+    "Manual outcome/name/notes persist; HTML-like names/notes render as inert text",
+    "Two measurements compare side by side with six values, duration, manual outcome and notes",
+    "Comparison copy offers selectable text when clipboard access is unavailable",
+    "Selected CSV/JSON exports work and protect spreadsheet formula-like names",
+    "Completed history can be hidden and restored; hiding selected result restores normal view",
+    "History search filters by measurement name/model/notes",
+    "Measurement cards and all six fixed statusbar values fit at 375/430/768/1280/1440px",
+    "Confirmed all-tool reset creates a zero baseline without erasing raw or individual measurements",
+    "Explicit zero measurement also renders in all five PiP token/cost columns",
+    "No JavaScript runtime errors in measurement interactions"
+  ],
+  "javascriptErrors": [],
+  "browserTransport": "about:blank rendering with real authenticated localhost API",
+  "limitations": [
+    "Synthetic CLI/SQLite inputs only; no real accounts",
+    "Browser navigation/CSP not verified by offline bridge",
+    "No real VS Code host, OS z-order or Windows/macOS test"
+  ]
+}

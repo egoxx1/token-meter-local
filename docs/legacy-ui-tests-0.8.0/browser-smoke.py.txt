@@ -1,0 +1,121 @@
+"""Optional UI smoke tests. Requires Python Playwright and a local Chromium binary.
+Run against an isolated `node bin/cli.js demo` instance only.
+python scripts/browser-smoke.py /path/to/demo-data --output /tmp/tm-ui
+"""
+import argparse,json,pathlib,os,urllib.request,urllib.error,urllib.parse,subprocess
+from playwright.sync_api import sync_playwright
+p=argparse.ArgumentParser();p.add_argument('data_dir');p.add_argument('--output',default='browser-results');p.add_argument('--chromium',default='/usr/bin/chromium');p.add_argument('--offline',action='store_true',help='Render app files on about:blank and bridge test fetches to the real local API without browser navigation');a=p.parse_args()
+out=pathlib.Path(a.output);out.mkdir(parents=True,exist_ok=True)
+r=json.loads(pathlib.Path(a.data_dir,'runtime.json').read_text())
+if not r.get('demo'):raise SystemExit('Refusing non-demo instance')
+browser_origin=r['origin']
+url=browser_origin+'/#key='+r['token'];checks=[];errors=[];console_errors=[];requests=[]
+def passed(name):checks.append(name)
+with sync_playwright() as pw:
+    browser=pw.chromium.launch(executable_path=a.chromium,args=['--no-sandbox'],headless=True)
+    page=browser.new_page(viewport={'width':1440,'height':1050},device_scale_factor=1)
+    page.on('pageerror',lambda e:errors.append(str(e)))
+    page.on('console',lambda m:console_errors.append(m.text) if m.type=='error' else None)
+    page.on('request',lambda q:requests.append(q.url))
+    if a.offline:
+        web=pathlib.Path(__file__).resolve().parent.parent/'web'
+        html=(web/'index.html').read_text().replace('<link rel="stylesheet" href="/style.css">','').replace('<script defer src="/app.js"></script>','').replace('<script defer src="/measurements.js"></script>','').replace('<script defer src="/history.js"></script>','').replace('<script defer src="/rates.js"></script>','').replace('<script defer src="/data-controls.js"></script>','')
+        page.set_content(html)
+        page.add_style_tag(content=(web/'style.css').read_text())
+        def test_fetch(endpoint,options):
+            if not endpoint.startswith('/api/'): raise ValueError('Only this app API may be bridged')
+            requests.append(r['origin']+endpoint)
+            body=options.get('body')
+            headers=options.get('headers',{})
+            target=urllib.request.Request(r['origin']+endpoint,data=body.encode() if body else None,headers=headers,method=options.get('method','GET'))
+            try: response=urllib.request.urlopen(target,timeout=10)
+            except urllib.error.HTTPError as err: response=err
+            with response: return {'body':response.read().decode(),'status':response.status,'headers':dict(response.headers)}
+        page.expose_function('__tmTestFetch',test_fetch)
+        page.evaluate('''token=>{Object.defineProperty(window,'sessionStorage',{value:{getItem:()=>token,setItem(){}}});window.fetch=async(endpoint,options={})=>{const v=await window.__tmTestFetch(endpoint,options);return new Response(v.body,{status:v.status,headers:v.headers});};}''',r['token'])
+        page.add_script_tag(content=(web/'app.js').read_text());page.add_script_tag(content=(web/'measurements.js').read_text());page.add_script_tag(content=(web/'history.js').read_text());page.add_script_tag(content=(web/'rates.js').read_text());page.add_script_tag(content=(web/'data-controls.js').read_text())
+    else: page.goto(url)
+    page.wait_for_function("document.querySelector('#connection').textContent === '로컬 수집 중'")
+    page.click('[data-scope="all"]');page.wait_for_function("document.querySelector('#record-count').textContent === '80개 기록'")
+    assert page.locator('#demo-badge').is_visible();assert '#' not in page.url;passed('Dashboard renders 80 deduplicated synthetic records')
+    assert page.locator('#model-table tr').count()>=5;passed('Model, effort and role table rendered')
+    for label in ('in','out','total'):
+        assert page.locator('#bar-'+label+'-tokens').inner_text().endswith(' tok')
+        assert '$' in page.locator('#bar-'+label+'-cost').inner_text()
+    assert page.locator('#in-tokens').inner_text().replace(',','').isdigit()
+    assert page.locator('#out-tokens').inner_text().replace(',','').isdigit()
+    assert page.locator('#total-tokens').inner_text().replace(',','').isdigit()
+    assert page.evaluate("Number(document.querySelector('#in-tokens').textContent.replaceAll(',',''))+Number(document.querySelector('#out-tokens').textContent.replaceAll(',',''))===Number(document.querySelector('#total-tokens').textContent.replaceAll(',',''))")
+    passed('IN, non-thinking OUT, THINKING, BILLABLE OUT and TOTAL each show tokens and costs; exact card totals equal IN + OUT')
+    assert page.locator('#model-table tr').first.locator('td').count()==14
+    assert page.locator('#recent-table tr').first.locator('td').count()==13
+    for table in ('model-table','recent-table'):
+        row=page.locator('#'+table+' tr').first
+        for index in (3,9,11):assert row.locator('td').nth(index).inner_text().startswith('$')
+    passed('Model and recent-record tables expose ten values including separately classified output in paired columns')
+    ag=page.locator('#provider-table tr[data-provider="antigravity"]')
+    assert '8개 관측 기록' in ag.inner_text()
+    assert all(ag.locator('td').nth(i).inner_text() not in ('—','미정') for i in range(1,11))
+    passed('Antigravity SQLite demo row exposes IN, OUT, TOTAL and three corresponding costs')
+    page.select_option('#provider','antigravity');page.wait_for_function("document.querySelector('#record-count').textContent === '8개 기록'")
+    assert 'Antigravity' in page.locator('#bottom-bar').inner_text()
+    assert page.locator('#model-table tr').count()==2
+    assert all('$' in page.locator('#bar-'+k+'-cost').inner_text() for k in ('in','out','total'))
+    page.screenshot(path=str(out/'antigravity.png'),full_page=True)
+    passed('Antigravity filter uses actual synthetic SQLite collector data, including model-specific costs')
+    page.select_option('#provider','all');page.wait_for_function("document.querySelector('#record-count').textContent === '80개 기록'")
+
+    assert '45개' in page.locator('#catalog-summary').inner_text();passed('45 provider/model combinations shown; price auto-refresh is off by default')
+    page.click('#catalog-button');page.wait_for_function("document.querySelector('#catalog-dialog').open");page.fill('#catalog-search','qwen');assert page.locator('#catalog-models tr').count()==1;assert 'openrouter' in page.locator('#catalog-models').inner_text();passed('Model catalog can be searched with explicit billing-provider namespace')
+    page.locator('[data-close="catalog-dialog"]').click();page.click('#check-updates');page.wait_for_function("document.querySelector('#message').textContent.includes('공개키')");passed('Unconfigured program update explicitly reports missing trusted feed/key')
+    page.locator('#message').evaluate('(el)=>el.hidden=true');page.evaluate('window.scrollTo(0,0)')
+    page.screenshot(path=str(out/'desktop.png'),full_page=False)
+    page.select_option('#provider','codex');page.wait_for_function("document.querySelector('#record-count').textContent === '36개 기록'");passed('Provider filter returns exactly 36 Codex records')
+    page.click('[data-scope="session"]');page.wait_for_function("!document.querySelector('#session').hidden && document.querySelector('#record-count').textContent === '12개 기록'");passed('Session filter returns 12 Codex records')
+    page.select_option('#provider','all');page.click('[data-scope="all"]');page.wait_for_function("document.querySelector('#record-count').textContent === '80개 기록'")
+    page.click('#settings-button');page.fill('#daily-budget','0.001');page.fill('#fx-rate','1300');page.fill('#fx-date','2026-09-24');page.locator('#settings-form button[type=submit]').click();page.wait_for_function("!document.querySelector('#settings-dialog').open && !document.querySelector('#budget-banner').hidden");passed('Settings persist and budget warning appears')
+    assert '원' in page.locator('#fx-note').inner_text();passed('Manual currency conversion rendered')
+    page.fill('#task-name','UI test <img src=x onerror=alert(1)>');page.click('#task-start');page.wait_for_function("!document.querySelector('#task-stop').hidden");assert page.locator('#task-list img').count()==0;passed('Task starts and untrusted text remains text')
+    page.click('#task-stop');page.wait_for_function("document.querySelector('#task-stop').hidden");passed('Task stops and remains selectable')
+    with page.expect_download() as dl:page.click('#export-button')
+    csv=dl.value;csv.save_as(str(out/'export.csv'));text=(out/'export.csv').read_text(encoding='utf-8-sig');assert len(text.strip().splitlines())==81;assert 'SYNTHETIC_DEMO_PROMPT' not in text;passed('CSV export has 80 data rows and no raw prompt')
+    with page.expect_download() as dl:page.click('#json-button')
+    dl.value.save_as(str(out/'export.json'));data=json.loads((out/'export.json').read_text());assert len(data['events'])==80;passed('Authenticated JSON export works')
+    page.locator('details.details summary').click();page.click('#price-button');page.fill('#price-model','synthetic-price-test');page.fill('#price-input','1');page.fill('#price-output','2');page.locator('#price-form button[type=submit]').click();page.wait_for_function("!document.querySelector('#price-dialog').open");passed('Custom model price can be saved from UI')
+    page.click('#settings-button');page.fill('#daily-budget','');page.fill('#fx-rate','');page.fill('#fx-date','');page.locator('#settings-form button[type=submit]').click();page.wait_for_function("!document.querySelector('#settings-dialog').open")
+    page.evaluate('window.scrollTo(0,0)');page.wait_for_timeout(150)
+    pip_supported=page.evaluate("'documentPictureInPicture' in window")
+    pip_test='not available in test browser'
+    if pip_supported and not a.offline:
+        with page.expect_popup() as pi:page.click('#pin-button')
+        pip=pi.value;pip.wait_for_selector('.pip-cost');assert 'API 환산' in pip.locator('body').inner_text();pip.screenshot(path=str(out/'mini-bar.png'));passed('Document Picture-in-Picture mini bar opens and displays cost');pip.close();pip_test='API opens and renders in Chromium headless; desktop z-order not visually verified'
+    else:
+        page.click('#pin-button');assert page.locator('#message').is_visible();passed('Unavailable PiP context receives explicit notice')
+        page.evaluate("pipWindow={closed:false,document:document.implementation.createHTMLDocument('Mini bar preview')};renderPip();")
+        assert page.evaluate("pipWindow.document.querySelectorAll('.pip-metric').length===5 && [...pipWindow.document.querySelectorAll('.pip-metric')].every(el=>el.querySelector('.pip-tokens').textContent.includes('tok') && el.querySelector('.pip-cost').textContent.length>0)");passed('Mini bar pairs token counts and prices for IN, non-thinking OUT, THINKING, BILLABLE OUT and TOTAL');markup=page.evaluate('pipWindow.document.body.outerHTML');mini=browser.new_page(viewport={'width':1040,'height':310});mini.set_content(markup);mini.add_style_tag(content=(pathlib.Path(__file__).resolve().parent.parent/'web'/'style.css').read_text());mini.screenshot(path=str(out/'mini-bar.png'));mini.close();passed('Mini bar component renders in isolated document (not OS always-on-top test)')
+    page.set_viewport_size({'width':430,'height':932});page.evaluate('window.scrollTo(0,0)');page.wait_for_timeout(150)
+    page.locator('#message').evaluate('(el)=>el.hidden=true');page.screenshot(path=str(out/'mobile.png'),full_page=False)
+    assert page.evaluate('document.documentElement.scrollWidth <= innerWidth');passed('430px mobile layout has no page-level horizontal overflow')
+    for size in (375,768,1280):
+        page.set_viewport_size({'width':size,'height':950});assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'),size
+    passed('375px, 768px and 1280px responsive layouts have no page-level overflow')
+    for width in (375,430,768,1280,1440):
+        page.set_viewport_size({'width':width,'height':950})
+        assert page.evaluate("['in','response','thinking','out','total'].every(id=>['tokens','cost'].every(field=>{const el=document.querySelector('#bar-'+id+'-'+field),r=el.getBoundingClientRect();return r.width>0&&r.height>0&&r.top>=0&&r.bottom<=innerHeight&&r.left>=0&&r.right<=innerWidth&&el.scrollWidth<=el.clientWidth+1;}))"),width
+    passed('All ten fixed-bar values remain inside the viewport at 375/430/768/1280/1440px')
+    page.evaluate("render({...lastData,summary:{...lastData.summary,inputUsd:null,totalUsd:null}})")
+    assert '(계산분)' in page.locator('#bar-in-cost').inner_text()
+    assert '(계산분)' in page.locator('#bar-total-cost').inner_text()
+    assert '(계산분)' not in page.locator('#bar-out-cost').inner_text()
+    passed('Partial price uncertainty is shown separately without hiding known output cost')
+
+    page.evaluate("render({...lastData,summary:{...lastData.summary,records:0,input:0,output:0,total:0,inputUsd:0,outputUsd:0,totalUsd:0,knownTotalUsd:0},byModel:[],byProject:[],byRole:[],recent:[]})");assert '$0' not in page.locator('#bottom-bar').inner_text();assert page.locator('#total-cost').inner_text()=='—';passed('No-record state does not present a confirmed zero bill')
+    assert not errors,errors
+    # A browser's automatic favicon lookup can produce a harmless 401; treat actual CSP errors as failures.
+    assert not [e for e in console_errors if 'Content Security Policy' in e or 'Refused to' in e],console_errors
+    passed('No JavaScript runtime errors')
+    assert not [u for u in requests if not u.startswith(browser_origin)],requests;passed('No external network requests')
+    browser.close()
+report={'checksPassed':len(checks),'checks':checks,'browser':subprocess.check_output([a.chromium,'--version'],text=True).strip(),'browserTransport':'about:blank app rendering; test fetch bridge to real localhost API (browser navigation blocked by runner policy)' if a.offline else 'direct localhost','pictureInPicture':pip_test,'javascriptErrors':errors,'consoleErrors':console_errors,'limitations':['Synthetic fixtures only; no user accounts accessed','No physical desktop always-on-top z-order check; mini preview is isolated component rendering','Browser navigation and browser-enforced CSP not validated in offline harness; server response headers tested separately','No actual VS Code Extension Host installation test']}
+(out/'browser-report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2))
+print(json.dumps(report,ensure_ascii=False,indent=2))

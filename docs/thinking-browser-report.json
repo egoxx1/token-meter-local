@@ -1,0 +1,29 @@
+{
+  "checksPassed": 17,
+  "checks": [
+    "Five top metrics display IN 15000, non-thinking OUT 500, THINKING 1500, total output 2000, TOTAL 17000",
+    "Response and thinking costs exactly partition the already-priced output; total is not double charged",
+    "Output parts are explicitly described as a breakdown, not additional charges",
+    "History table exposes all output subcounts and original total in separate columns",
+    "Request detail shows conservation equation and independent token-times-rate cost table",
+    "Actual mini-bar renderer contains five token/cost groups",
+    "Mixed missing/mismatched records show partial breakdown with 115 unclassified output, not zero thinking",
+    "Unknown thinking partition does not invalidate a known overall output charge",
+    "New output-breakdown history filter selects two explicit complete records",
+    "Unresolved filter selects missing/mismatch records with no fabricated thinking counts",
+    "Conflict detail explains mismatch while preserving original overall output",
+    "Monthly logs retain output split metadata and scanning does not duplicate requests",
+    "JSONL export preserves null (missing), zero and positive THINKING separately",
+    "CSV export includes distinct output token and cost fields",
+    "Antigravity split is visibly marked reference because private field semantics are not certified",
+    "All ten fixed-bar fields remain visible across five tested viewport widths",
+    "No JavaScript errors in thinking-specific interactions"
+  ],
+  "javascriptErrors": [],
+  "transport": "about:blank actual app + real authenticated local API",
+  "limitations": [
+    "All records are synthetic; no real user data",
+    "No OS topmost or actual VS Code Extension Host validation",
+    "Offline bridge does not validate browser navigation/CSP"
+  ]
+}

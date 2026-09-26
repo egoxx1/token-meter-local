@@ -1,0 +1,146 @@
+"""Measurement UI smoke tests. Run only against a fresh isolated demo. Requires Python Playwright and a local Chromium binary.
+Run against an isolated `node bin/cli.js demo` instance only.
+python scripts/measurement-smoke.py /path/to/demo-data --offline --output /tmp/tm-ui
+"""
+import argparse,json,pathlib,os,urllib.request,urllib.error,urllib.parse,subprocess
+from playwright.sync_api import sync_playwright
+p=argparse.ArgumentParser();p.add_argument('data_dir');p.add_argument('--output',default='measurement-browser-results');p.add_argument('--chromium',default='/usr/bin/chromium');p.add_argument('--offline',action='store_true',help='Render app files on about:blank and bridge test fetches to the real local API without browser navigation');a=p.parse_args()
+out=pathlib.Path(a.output);out.mkdir(parents=True,exist_ok=True)
+r=json.loads(pathlib.Path(a.data_dir,'runtime.json').read_text())
+if not r.get('demo'):raise SystemExit('Refusing non-demo instance')
+browser_origin=r['origin']
+url=browser_origin+'/#key='+r['token'];checks=[];errors=[];console_errors=[];requests=[]
+def passed(name):checks.append(name)
+with sync_playwright() as pw:
+    browser=pw.chromium.launch(executable_path=a.chromium,args=['--no-sandbox'],headless=True)
+    page=browser.new_page(viewport={'width':1440,'height':1050},device_scale_factor=1)
+    page.on('pageerror',lambda e:errors.append(str(e)))
+    page.on('console',lambda m:console_errors.append(m.text) if m.type=='error' else None)
+    page.on('request',lambda q:requests.append(q.url))
+    if a.offline:
+        web=pathlib.Path(__file__).resolve().parent.parent/'web'
+        html=(web/'index.html').read_text().replace('<link rel="stylesheet" href="/style.css">','').replace('<script defer src="/app.js"></script>','').replace('<script defer src="/measurements.js"></script>','').replace('<script defer src="/history.js"></script>','').replace('<script defer src="/rates.js"></script>','').replace('<script defer src="/data-controls.js"></script>','')
+        page.set_content(html)
+        page.add_style_tag(content=(web/'style.css').read_text())
+        def test_fetch(endpoint,options):
+            if not endpoint.startswith('/api/'): raise ValueError('Only this app API may be bridged')
+            requests.append(r['origin']+endpoint)
+            body=options.get('body')
+            headers=options.get('headers',{})
+            target=urllib.request.Request(r['origin']+endpoint,data=body.encode() if body else None,headers=headers,method=options.get('method','GET'))
+            try: response=urllib.request.urlopen(target,timeout=10)
+            except urllib.error.HTTPError as err: response=err
+            with response: return {'body':response.read().decode(),'status':response.status,'headers':dict(response.headers)}
+        page.expose_function('__tmTestFetch',test_fetch)
+        page.evaluate('''token=>{Object.defineProperty(window,'sessionStorage',{value:{getItem:()=>token,setItem(){}}});window.fetch=async(endpoint,options={})=>{const v=await window.__tmTestFetch(endpoint,options);return new Response(v.body,{status:v.status,headers:v.headers});};}''',r['token'])
+        page.add_script_tag(content=(web/'app.js').read_text());page.add_script_tag(content=(web/'measurements.js').read_text());page.add_script_tag(content=(web/'history.js').read_text());page.add_script_tag(content=(web/'rates.js').read_text());page.add_script_tag(content=(web/'data-controls.js').read_text())
+    else: page.goto(url)
+    def api(endpoint,body=None):
+        opts={'headers':{'Authorization':'Bearer '+r['token']}}
+        if body is not None:opts.update({'method':'POST','body':json.dumps(body)});opts['headers']['Content-Type']='application/json'
+        return page.evaluate('async ([url,opts])=>{const r=await fetch(url,opts);const v=await r.json();if(!r.ok)throw Error(v.error);return v}',[endpoint,opts])
+    page.wait_for_function("window.TMMeasurements && document.querySelector('#connection').textContent === '로컬 수집 중'")
+    page.click('[data-scope="all"]');page.wait_for_function("document.querySelector('#record-count').textContent==='80개 기록'")
+    assert len(api('/api/measurements')['runs'])==0,'Use a fresh demo instance'
+    raw=api('/api/status?scope=all')['summary']
+    codex=page.locator('#provider-table tr[data-provider="codex"]')
+    codex.locator('.reset-row').click();page.wait_for_function("document.querySelector('#table-mode').textContent==='재측정 표시 중' && document.querySelector('#provider-table tr[data-provider=codex] td:nth-child(2)').textContent==='0'")
+    assert api('/api/status?scope=all')['summary']==raw
+    assert codex.locator('td').nth(2).inner_text().startswith('$0')
+    passed('Provider reset displays zero input/output/total and three prices, preserving raw cumulative usage')
+    page.click('#undo-reset');page.wait_for_function("document.querySelector('#provider-table tr[data-provider=codex] td:nth-child(2)').textContent!=='0'")
+    assert api('/api/measurements')['runs'][0]['status']=='cancelled';passed('Undo restores original provider display and retains cancelled measurement history')
+    d=api('/api/status?scope=all');index=next(i for i,m in enumerate(d['byModel']) if m['provider']=='codex' and m['model']=='gpt-6-luna' and m['role']=='main')
+    page.locator('#model-table tr').nth(index).locator('.reset-row').click()
+    page.wait_for_function("document.querySelectorAll('#measurement-list .meter-card').length===2")
+    modelrun=api('/api/measurements')['runs'][0];assert modelrun['filter']['model']=='gpt-6-luna';assert modelrun['filter']['effort']=='high'
+    passed('Model row reset targets provider, billing service, exact model, effort and role')
+    cfg=api('/api/config');root=pathlib.Path(cfg['roots']['codex'][0]);counter=0
+    def add_codex(input=8000,output=600):
+        global counter
+        counter+=1;stamp=page.evaluate('new Date().toISOString()');sid='measurement-ui-'+str(counter)
+        totals={'input_tokens':input,'output_tokens':output,'cached_input_tokens':0,'reasoning_output_tokens':100,'total_tokens':input+output}
+        rows=[{'type':'session_meta','timestamp':stamp,'payload':{'id':sid,'cwd':'/projects/site','timestamp':stamp,'model_provider':'openai'}},{'type':'turn_context','timestamp':stamp,'payload':{'turn_id':'t','model':'gpt-6-luna','effort':'high'}},{'type':'event_msg','timestamp':stamp,'payload':{'type':'token_count','info':{'total_token_usage':totals,'last_token_usage':totals}}}]
+        (root/(sid+'.jsonl')).write_text('\n'.join(json.dumps(v) for v in rows)+'\n')
+    add_codex();page.click('#scan-button');page.wait_for_function("[...document.querySelectorAll('#model-table tr')].some(r=>r.textContent.includes('gpt-6-luna')&&r.querySelector('td:nth-child(3)').textContent==='8,000')")
+    assert api('/api/measurements/export.json?ids='+modelrun['id'])['runs'][0]['summary']['total']==8600
+    passed('New real synthetic Codex log increases only the reset model meter with IN 8,000 OUT 600 TOTAL 8,600')
+    codex.locator('.reset-row').click();page.wait_for_function("document.querySelectorAll('#measurement-list .meter-card').length===3")
+    assert page.locator('#model-table tr').nth(index).locator('td').nth(2).inner_text()=='0'
+    passed('A newer provider-wide reset also resets visible model rows through baseline inheritance')
+    add_codex(12000,900);page.click('#scan-button');page.wait_for_function("document.querySelector('#provider-table tr[data-provider=codex] td:nth-child(2)').textContent==='12,000'")
+    page.click('#table-mode');page.wait_for_function("document.querySelector('#table-mode').textContent==='누적 표시 중'")
+    assert int(codex.locator('td').nth(1).inner_text().splitlines()[0].replace(',',''))>12000;page.click('#table-mode')
+    passed('Cumulative vs measurement row display can be toggled without deleting either set of data')
+    # Create a named Antigravity measurement through the actual form.
+    page.click('#new-measurement');page.fill('#measurement-name','검색 API 구현 · Antigravity [합성]');page.select_option('#measurement-provider','antigravity');page.fill('#measurement-model','gemini-3.8-flash');page.fill('#measurement-budget','0.001');page.fill('#measurement-notes','같은 과제 비교용 합성 데이터 · 실제 성능 평가 아님')
+    page.locator('#measurement-form button[type=submit]').click();page.wait_for_function("!document.querySelector('#measurement-dialog').open && document.querySelector('#total-tokens').textContent==='0'")
+    named=api('/api/measurements')['runs'][0];assert named['name'].startswith('검색 API 구현');assert page.locator('#measurement-banner').is_visible();assert page.locator('#provider').is_disabled()
+    passed('Named measurement form starts at zero and explicitly disables unrelated global filters')
+    # Native SQLite ingestion, same underlying reader as the installed extension.
+    dbfile=str(pathlib.Path(cfg['roots']['antigravity'][0])/'measurement-ui-native.db')
+    code="const f=require('./test/antigravity-fixtures');f.database(process.argv[1],[f.generation({time:new Date().toISOString(),response:'ui-new-response',message:'ui-message'})]);"
+    subprocess.check_call(['node','-e',code,dbfile],cwd=str(pathlib.Path(__file__).resolve().parent.parent),stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+    page.click('#scan-button');page.wait_for_function("document.querySelector('#in-tokens').textContent==='15,000' && document.querySelector('#out-tokens').textContent==='2,000'")
+    card=page.locator('.meter-card[data-id="'+named['id']+'"]');assert '17,000 tok' in card.inner_text();assert '초과' in card.inner_text()
+    assert all('$' in page.locator('#bar-'+k+'-cost').inner_text() for k in ['in','out','total'])
+    passed('Antigravity native SQLite record populates all six values and per-measurement budget warning')
+    card.get_by_role('button',name='상태바 고정',exact=True).click();page.wait_for_function("[...document.querySelectorAll('.meter-card button')].some(b=>b.textContent==='고정 해제')")
+    pinned=api('/api/status?followPinned=1');assert pinned['measurement']['id']==named['id'];assert pinned['summary']['total']==17000
+    passed('Pin selection is exposed to VS Code via authenticated followPinned status')
+    card.get_by_role('button',name='종료·저장',exact=True).click();page.wait_for_function("document.querySelector('#measurement-banner').textContent.includes('종료된 고정')")
+    before=api('/api/measurements/export.json?ids='+named['id'])['runs'][0]
+    add_codex(1000,100);page.click('#scan-button');page.wait_for_timeout(150)
+    assert api('/api/measurements/export.json?ids='+named['id'])['runs'][0]==before
+    passed('End and save freezes the entire measured result across later log collection')
+    card.get_by_role('button',name='이름·결과·메모',exact=True).click();page.fill('#measurement-edit-name','=검색 API 구현 · Antigravity [합성]');page.select_option('#measurement-outcome','pass');page.fill('#measurement-edit-notes','<img src=x onerror=alert(1)> 직접 평가 예시일 뿐 실제 품질 점수 아님');page.locator('#measurement-edit-form button[type=submit]').click();page.wait_for_function("!document.querySelector('#measurement-edit-dialog').open")
+    assert page.locator('#measurement-list img').count()==0;assert 'PASS' in card.inner_text()
+    passed('Manual outcome/name/notes persist; HTML-like names/notes render as inert text')
+    # Stop the Codex model measurement and rename it for the comparison.
+    api('/api/measurements/stop',{'id':modelrun['id']});api('/api/measurements/update',{'id':modelrun['id'],'name':'검색 API 구현 · Codex [합성]','notes':'동일 과제라는 가정의 UI 시험 데이터','outcome':'partial'})
+    page.evaluate('load()');page.wait_for_function("document.querySelector('#measurement-list').textContent.includes('검색 API 구현 · Codex')")
+    for id in [named['id'],modelrun['id']]:page.locator('.meter-card[data-id="'+id+'"] input[type=checkbox]').check()
+    page.click('#compare-measurements');page.wait_for_function("document.querySelector('#comparison-dialog').open")
+    for name in ['IN 토큰','IN 비용','OUT 토큰','OUT 비용','TOTAL 토큰','TOTAL 비용','관측 경과','검수 결과']:assert name in page.locator('#comparison-table').inner_text()
+    assert page.locator('#comparison-table thead th').count()==3
+    passed('Two measurements compare side by side with six values, duration, manual outcome and notes')
+    page.click('#copy-comparison');page.wait_for_timeout(200)
+    assert page.locator('#copy-comparison').inner_text() in ['복사됨','아래 텍스트를 직접 복사']
+    if page.locator('#comparison-text').is_visible():assert 'TOTAL 비용' in page.locator('#comparison-text').input_value()
+    passed('Comparison copy offers selectable text when clipboard access is unavailable')
+    with page.expect_download() as dl:page.click('#comparison-json')
+    dl.value.save_as(str(out/'measurement-export.json'));assert len(json.loads((out/'measurement-export.json').read_text())['runs'])==2
+    page.locator('[data-close="comparison-dialog"]').click()
+    with page.expect_download() as dl:page.click('#export-measurements')
+    dl.value.save_as(str(out/'measurement-export.csv'));assert "'=검색" in (out/'measurement-export.csv').read_text(encoding='utf-8-sig')
+    passed('Selected CSV/JSON exports work and protect spreadsheet formula-like names')
+    card.get_by_role('button',name='목록 숨기기',exact=True).click();page.wait_for_function("!document.querySelector('#provider').disabled")
+    assert page.locator('.meter-card[data-id="'+named['id']+'"]').count()==0;page.check('#show-archived');assert page.locator('.meter-card[data-id="'+named['id']+'"]').count()==1
+    page.locator('.meter-card[data-id="'+named['id']+'"]').get_by_role('button',name='목록 복원',exact=True).click();page.uncheck('#show-archived')
+    passed('Completed history can be hidden and restored; hiding selected result restores normal view')
+    page.fill('#measurement-search','Antigravity');assert page.locator('#measurement-list .meter-card').count()==1;page.fill('#measurement-search','')
+    passed('History search filters by measurement name/model/notes')
+    # Replace security-test strings with readable synthetic labels for release screenshots.
+    api('/api/measurements/update',{'id':named['id'],'name':'검색 API 구현 · Antigravity [합성]','notes':'동일 과제 비교용 합성 데이터 · PASS는 직접 기록한 예시이며 실제 품질 검증 아님'})
+    page.evaluate('load()');page.wait_for_function("!document.querySelector('#measurement-list').textContent.includes('<img')")
+    page.click('#compare-measurements');page.wait_for_function("document.querySelector('#comparison-dialog').open")
+    page.screenshot(path=str(out/'comparison.png'));page.locator('[data-close="comparison-dialog"]').click()
+    # Save actual rendered feature screenshots; all displayed data is explicitly synthetic.
+    page.locator('#message').evaluate('(e)=>e.hidden=true');page.locator('#measurement-panel').scroll_into_view_if_needed();page.screenshot(path=str(out/'measurements.png'))
+    for width in [375,430,768,1280,1440]:
+        page.set_viewport_size({'width':width,'height':1050});assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),width
+        assert page.evaluate("['in','response','thinking','out','total'].every(id=>['tokens','cost'].every(k=>{const e=document.querySelector('#bar-'+id+'-'+k),r=e.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth&&r.bottom<=innerHeight&&e.scrollWidth<=e.clientWidth+1}))"),width
+    passed('Measurement cards and all six fixed statusbar values fit at 375/430/768/1280/1440px')
+    page.set_viewport_size({'width':430,'height':932});page.locator('#measurement-panel').scroll_into_view_if_needed();page.screenshot(path=str(out/'measurement-mobile.png'))
+    page.set_viewport_size({'width':1440,'height':1050});page.on('dialog',lambda dialog:dialog.accept());total_before=api('/api/status?scope=all')['summary']['total']
+    page.click('#reset-all');page.wait_for_function("document.querySelector('#total-tokens').textContent==='0' && document.querySelector('#measurement-banner').textContent.includes('전체 도구')")
+    assert api('/api/status?scope=all')['summary']['total']==total_before
+    passed('Confirmed all-tool reset creates a zero baseline without erasing raw or individual measurements')
+    # Zero result in isolated PiP renderer.
+    page.evaluate("pipWindow={closed:false,document:document.implementation.createHTMLDocument('Meter mini')};renderPip()")
+    assert page.evaluate("[...pipWindow.document.querySelectorAll('.pip-cost')].every(e=>e.textContent==='$0.000')")
+    passed('Explicit zero measurement also renders in all five PiP token/cost columns')
+    assert not errors,errors;passed('No JavaScript runtime errors in measurement interactions')
+    browser.close()
+report={'checksPassed':len(checks),'checks':checks,'javascriptErrors':errors,'browserTransport':'about:blank rendering with real authenticated localhost API' if a.offline else 'direct localhost','limitations':['Synthetic CLI/SQLite inputs only; no real accounts','Browser navigation/CSP not verified by offline bridge','No real VS Code host, OS z-order or Windows/macOS test']}
+(out/'measurement-browser-report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2));print(json.dumps(report,ensure_ascii=False,indent=2))

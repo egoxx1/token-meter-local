@@ -1,0 +1,102 @@
+"""Input buckets and API rates UI smoke tests. Run only against a fresh isolated demo. Requires Python Playwright and a local Chromium binary.
+Run against an isolated `node bin/cli.js demo` instance only.
+python scripts/measurement-smoke.py /path/to/demo-data --offline --output /tmp/tm-ui
+"""
+import argparse,json,pathlib,os,urllib.request,urllib.error,urllib.parse,subprocess
+from playwright.sync_api import sync_playwright
+p=argparse.ArgumentParser();p.add_argument('data_dir');p.add_argument('--output',default='measurement-browser-results');p.add_argument('--chromium',default='/usr/bin/chromium');p.add_argument('--offline',action='store_true',help='Render app files on about:blank and bridge test fetches to the real local API without browser navigation');a=p.parse_args()
+out=pathlib.Path(a.output);out.mkdir(parents=True,exist_ok=True)
+r=json.loads(pathlib.Path(a.data_dir,'runtime.json').read_text())
+if not r.get('demo'):raise SystemExit('Refusing non-demo instance')
+browser_origin=r['origin']
+url=browser_origin+'/#key='+r['token'];checks=[];errors=[];console_errors=[];requests=[]
+def passed(name):checks.append(name)
+with sync_playwright() as pw:
+    browser=pw.chromium.launch(executable_path=a.chromium,args=['--no-sandbox'],headless=True)
+    page=browser.new_page(viewport={'width':1440,'height':1050},device_scale_factor=1)
+    page.on('pageerror',lambda e:errors.append(str(e)))
+    page.on('console',lambda m:console_errors.append(m.text) if m.type=='error' else None)
+    page.on('request',lambda q:requests.append(q.url))
+    if a.offline:
+        web=pathlib.Path(__file__).resolve().parent.parent/'web'
+        html=(web/'index.html').read_text().replace('<link rel="stylesheet" href="/style.css">','').replace('<script defer src="/app.js"></script>','').replace('<script defer src="/measurements.js"></script>','').replace('<script defer src="/history.js"></script>','').replace('<script defer src="/rates.js"></script>','').replace('<script defer src="/data-controls.js"></script>','')
+        page.set_content(html)
+        page.add_style_tag(content=(web/'style.css').read_text())
+        def test_fetch(endpoint,options):
+            if not endpoint.startswith('/api/'): raise ValueError('Only this app API may be bridged')
+            requests.append(r['origin']+endpoint)
+            body=options.get('body')
+            headers=options.get('headers',{})
+            target=urllib.request.Request(r['origin']+endpoint,data=body.encode() if body else None,headers=headers,method=options.get('method','GET'))
+            try: response=urllib.request.urlopen(target,timeout=10)
+            except urllib.error.HTTPError as err: response=err
+            with response: return {'body':response.read().decode(),'status':response.status,'headers':dict(response.headers)}
+        page.expose_function('__tmTestFetch',test_fetch)
+        page.evaluate('''token=>{Object.defineProperty(window,'sessionStorage',{value:{getItem:()=>token,setItem(){}}});window.fetch=async(endpoint,options={})=>{const v=await window.__tmTestFetch(endpoint,options);return new Response(v.body,{status:v.status,headers:v.headers});};}''',r['token'])
+        page.add_script_tag(content=(web/'app.js').read_text());page.add_script_tag(content=(web/'measurements.js').read_text());page.add_script_tag(content=(web/'history.js').read_text());page.add_script_tag(content=(web/'rates.js').read_text());page.add_script_tag(content=(web/'data-controls.js').read_text())
+    else: page.goto(url)
+    def api(endpoint,body=None):
+        req=urllib.request.Request(r['origin']+endpoint,data=json.dumps(body).encode() if body is not None else None,headers={'Authorization':'Bearer '+r['token'],'Content-Type':'application/json'})
+        with urllib.request.urlopen(req,timeout=30) as resp:return json.loads(resp.read())
+    page.wait_for_function("document.querySelector('#connection').textContent==='로컬 수집 중' && window.TMRates !== undefined")
+    cfg=api('/api/config');stamp=page.evaluate('new Date().toISOString()')
+    total_normal=95207;total_cached=3162240;total_out=22618;total_think=8405
+    counters={'input_tokens':0,'cached_input_tokens':0,'cache_write_input_tokens':0,'output_tokens':0,'reasoning_output_tokens':0,'total_tokens':0}
+    rows=[{'timestamp':stamp,'type':'session_meta','payload':{'id':'rate-audit-example','cwd':'/synthetic/rate-audit-example','timestamp':stamp,'model_provider':'openai'}}]
+    for i in range(34):
+        left=34-i;n=total_normal//left;c=total_cached//left;o=total_out//left;t=total_think//left
+        total_normal-=n;total_cached-=c;total_out-=o;total_think-=t
+        delta={'input_tokens':n+c,'cached_input_tokens':c,'cache_write_input_tokens':0,'output_tokens':o,'reasoning_output_tokens':t,'total_tokens':n+c+o}
+        for k,v in delta.items():counters[k]+=v
+        rows.append({'timestamp':stamp,'type':'turn_context','payload':{'model':'gpt-6-sol','turn_id':'rate-audit-'+str(i),'effort':'high'}})
+        rows.append({'timestamp':stamp,'type':'event_msg','payload':{'type':'token_count','info':{'total_token_usage':dict(counters),'last_token_usage':delta}}})
+    (pathlib.Path(cfg['roots']['codex'][0])/'rate-audit-example.jsonl').write_text('\n'.join(json.dumps(x) for x in rows)+'\n')
+    api('/api/scan',{});page.evaluate('load()');page.click('[data-scope="all"]')
+    page.wait_for_function("[...document.querySelector('#project').options].some(x=>x.text==='rate-audit-example')")
+    option=page.locator('#project option').filter(has_text='rate-audit-example').get_attribute('value');page.select_option('#project',option)
+    page.wait_for_function("document.querySelector('#in-tokens').textContent==='3,257,447'")
+    assert page.locator('#total-cost').inner_text()=='$1.049042';assert page.locator('#output-cost').inner_text()=='$0.22618'
+    passed('34 synthetic short-context Sol requests reproduce the screenshot arithmetic with full amount precision')
+    assert page.locator('#input-bucket-normal .bucket-tokens').inner_text()=='95,207';assert page.locator('#input-bucket-cached .bucket-tokens').inner_text()=='3,162,240';assert page.locator('#input-bucket-write .bucket-tokens').inner_text()=='0'
+    assert page.locator('#input-bucket-normal .bucket-cost').inner_text()=='$0.190414';assert page.locator('#input-bucket-cached .bucket-cost').inner_text()=='$0.632448';assert page.locator('#input-bucket-write .bucket-cost').inner_text()=='$0.000'
+    passed('Input, Cached input and Cache writes show separate exact counts and matching costs')
+    assert '3,257,447 = 일반 95,207 + 캐시 읽기 3,162,240 + 캐시 쓰기 0' in page.locator('#input-equation').inner_text()
+    assert '97.08%' in page.locator('#input-bucket-notes').inner_text();passed('IN conservation equation and actual cache-hit ratio explain the low blended cost')
+    assert '100만 토큰 (1M = 1,000,000)' in page.locator('#applied-unit').inner_text()
+    tariff=page.locator('#applied-rates-table tr').first
+    assert tariff.locator('td').nth(1).inner_text()=='$2.00';assert tariff.locator('td').nth(2).inner_text()=='$0.20';assert tariff.locator('td').nth(3).inner_text()=='$2.50';assert tariff.locator('td').nth(4).inner_text()=='$10.00'
+    passed('API rate table shows four Sol tariffs per explicitly labeled 1,000,000 tokens, even zero-use writes')
+    page.locator('#input-pricing-panel').evaluate("e=>e.scrollIntoView({block:'start'})");page.locator('#input-pricing-panel').screenshot(path=str(out/'input-rates.png'))
+    page.evaluate('window.scrollTo(0,0)');page.screenshot(path=str(out/'desktop.png'),full_page=False)
+    page.click('#show-all-rates');page.wait_for_function("document.querySelector('#rate-detail-dialog').open")
+    proof=page.locator('#rate-detail-content').inner_text();assert '272,000' in proof;assert '누적량으로 판정하지 않습니다' in proof;assert '95,207 ÷ 1,000,000 × $2.00' in proof;assert '3,162,240 ÷ 1,000,000 × $0.20' in proof
+    assert '2026-09-25' in proof;assert page.locator('#rate-detail-content a[href*="gpt-6-sol"]').count()==1
+    passed('Rate details disclose source/date and whole-request 272K context rule, not cumulative million-token totals')
+    page.locator('#rate-detail-dialog').screenshot(path=str(out/'rate-details.png'));page.locator('[data-close="rate-detail-dialog"]').click()
+    before=page.locator('#total-cost').inner_text();page.select_option('#rate-unit-select','1000');assert '1,000 토큰' in page.locator('#applied-unit').inner_text();assert page.locator('#applied-rates-table tr').first.locator('td').nth(1).inner_text()=='$0.002';assert page.locator('#applied-rates-table tr').first.locator('td').nth(2).inner_text()=='$0.0002';assert page.locator('#total-cost').inner_text()==before
+    passed('Optional 1,000-token price unit rescales only the tariff display, never measured spend')
+    page.select_option('#rate-unit-select','1000000');page.click('#input-details-toggle');page.wait_for_function("document.querySelector('#input-detail-dialog').open");assert '5분' in page.locator('#input-detail-content').inner_text();assert '1시간' in page.locator('#input-detail-content').inner_text();page.locator('[data-close="input-detail-dialog"]').click();passed('Input detail keeps distinct five-minute, one-hour and unsplit cache-write buckets')
+    assert page.locator('#model-table tr').first.locator('.model-api-rates').count()==1;assert '$2.50' in page.locator('#model-table .rate-preview').first.inner_text();page.locator('#model-table .api-rate-button').first.click();assert page.locator('#rate-detail-dialog').is_visible();page.locator('[data-close="rate-detail-dialog"]').click();passed('Each model row has its own tariff and calculation-details action')
+    page.fill('#history-search','rate-audit-example');page.locator('#history-form button[type=submit]').click();page.wait_for_function("document.querySelector('#history-count').textContent.includes('검색 34개')")
+    assert '쓰기 $2.50' in page.locator('#recent-table .rate-preview').first.inner_text();page.locator('#recent-table .history-detail-btn').first.click();page.wait_for_function("document.querySelector('#price-detail-dialog').open");assert 'Cached input' in page.locator('#price-detail-content').inner_text();assert '÷ 1,000,000 ×' in page.locator('#price-detail-content').inner_text();page.locator('[data-close="price-detail-dialog"]').click();passed('Recent rows and request proof expose the stored tariff and individual bucket calculations')
+    with page.expect_download() as dl:page.click('#history-csv')
+    dl.value.save_as(str(out/'usage.csv'));csv=(out/'usage.csv').read_text();assert len(csv.strip().splitlines())==35
+    for key in ['normalInputUsd','cacheReadUsd','cacheWriteUnknownUsd','priceUnitTokens','rateInput','rateCachedInput','rateCacheWrite','rateOutput']:assert key in csv
+    passed('Full filtered CSV exports all 34 rows with rates, unit basis and cache component costs')
+    # Change only the UI scope, not the source history; no fabricated single-price average.
+    page.select_option('#project','');page.wait_for_function("document.querySelector('#record-count').textContent==='114개 기록'")
+    assert page.locator('#applied-rates-table tr').count()>3;assert '개 단가 적용' in page.locator('#input-bucket-normal .bucket-rate').inner_text();passed('Mixed-model totals show multiple applicable rates rather than a misleading single model price')
+    page.select_option('#provider','claude');page.wait_for_function("document.querySelector('#record-count').textContent==='20개 기록'");page.click('#input-details-toggle');text=page.locator('#input-detail-content').inner_text();assert '5분' in text and '1시간' in text;page.locator('[data-close="input-detail-dialog"]').click();passed('Claude write durations and their separate accounting remain available')
+    page.select_option('#provider','antigravity');page.wait_for_function("document.querySelector('#record-count').textContent==='8개 기록'");google=page.locator('#applied-rates-table tr').filter(has_text='gemini-3.8-flash');assert '단가 없음 (무료 아님)' in google.inner_text();passed('Google unlisted cache-write tariff is explicitly unknown, never a zero/free hourly-storage substitute')
+    page.select_option('#provider','all');page.select_option('#project',option);page.wait_for_function("document.querySelector('#in-tokens').textContent==='3,257,447'")
+    for width in (375,430,768,1280,1440):
+        page.set_viewport_size({'width':width,'height':1050});assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
+        assert page.locator('#input-bucket-normal').is_visible() and page.locator('#input-bucket-cached').is_visible() and page.locator('#input-bucket-write').is_visible()
+    passed('Three input buckets and controls have no page-level horizontal overflow at five widths')
+    page.set_viewport_size({'width':430,'height':1100});page.locator('#input-pricing-panel').screenshot(path=str(out/'input-rates-mobile.png'))
+    page.set_viewport_size({'width':1440,'height':1050})
+    page.evaluate("TMRates.renderInput({...lastData,summary:{...lastData.summary,inputBreakdown:undefined,apiRates:undefined}})");assert page.locator('#applied-rates-table tr').count()==0;assert '고정 측정' in page.locator('#applied-rates-note').inner_text();passed('Old frozen measurement without new metadata never retains the previous view tariff table')
+    assert not errors,errors;passed('No JavaScript runtime errors in input/rate/history interactions')
+    browser.close()
+report={'checksPassed':len(checks),'checks':checks,'javascriptErrors':errors,'transport':'about:blank real app files + authenticated local HTTP API bridge' if a.offline else 'direct localhost','syntheticData':'34 short requests recreate the arithmetic of the supplied screenshot; this is not the user original log or a billing reconciliation','limitations':['No real VSIX Extension Host installation','No real user Antigravity DB or provider billing account','No actual macOS/Windows or OS PiP validation','Offline bridge does not verify browser navigation/CSP']}
+(out/'input-rates-report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2));print(json.dumps(report,ensure_ascii=False,indent=2))

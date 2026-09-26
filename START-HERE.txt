@@ -1,0 +1,24 @@
+Token Meter Local 0.10.1 — 설치와 복구
+
+1. VS Code → 확장 → … → Install from VSIX…
+   token-meter-local-0.10.1.vsix 선택
+2. 작업 저장 → Developer: Reload Window
+3. 기존 브라우저 탭 닫기 → VS Code 하단 TM → LOCAL / 0.10.1 확인
+4. 검증 → Antigravity 세션 선택 → DB ↔ 장부 대조
+5. CLI와 비교할 때 '원본 세션 전체 보기' / '초기화 이후 보기'를 구분
+
+복구를 위해 전체 초기화를 다시 누르지 마세요.
+~/.token-meter / active-data.json / data-epochs를 삭제하지 마세요.
+원본 DB가 남아 있으면 자동 백업 후 호출 ID를 재구성합니다.
+이미 잃은 과거 초기화 순간의 호출별 카운터는 완전히 복원되지 않을 수 있습니다.
+
+전체 소스 실행:
+  소스 ZIP 압축 해제 → token-meter 폴더에서
+  node bin/cli.js stop
+  node bin/cli.js serve --open
+
+기기 안에서 원본 독립 대조:
+  python3 scripts/verify-antigravity.py /absolute/path/to/conversation.db
+
+개발 기기의 macOS 설치·로컬 DB 대조와 합성 테스트는 별개이며, 다른 사용자 환경·실제 청구액은 검증되지 않았습니다.
+가격은 API 환산액입니다. README.md와 docs/TEST-REPORT-0.10.1.md를 참고하세요.

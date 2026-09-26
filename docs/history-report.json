@@ -1,0 +1,29 @@
+{
+  "checksPassed": 17,
+  "checks": [
+    "UI and collector both report 0.7.1",
+    "Incomplete amounts show an explicit subtotal and reasons instead of question marks or fabricated total",
+    "Usage history remains all-time/all-tools while main summary is filtered",
+    "Internal ID 1319 is shown as Gemini 3.8 Flash Medium, with full six values and mapping attribution",
+    "Price detail displays official rates, source, checked date, mapping limitation and token-times-rate arithmetic",
+    "Unidentified model IDs stay explicit and are not converted to a false zero cost",
+    "Incomplete-price filter isolates unresolved model and missing cache-TTL records",
+    "Next history page contains different retained requests beyond the latest 50",
+    "Live status polling does not jump away from a historical page",
+    "Previous history page restores the matching request range",
+    "History JSONL export contains all matching latest requests, not just the page, and no prompt bodies",
+    "History CSV export includes price states and reason fields",
+    "Persistent journal location and unique-request counts are visible",
+    "Actual monthly journal is created on disk without the synthetic prompt sentinel",
+    "Reanalysis action preserves unique request count",
+    "New price/history controls have no horizontal page overflow at five viewport sizes",
+    "No JavaScript runtime errors in new price/history interactions"
+  ],
+  "javascriptErrors": [],
+  "transport": "about:blank app files + authenticated loopback fetch bridge",
+  "data": "Synthetic CLI JSONL and actual temporary SQLite files. No real account or user database.",
+  "limitations": [
+    "Not a real VS Code installation or OS PiP test",
+    "Direct browser navigation is blocked by runner policy; browser CSP navigation not verified"
+  ]
+}

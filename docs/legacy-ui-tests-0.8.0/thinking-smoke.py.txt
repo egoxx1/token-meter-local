@@ -1,0 +1,118 @@
+"""Thinking/output partition UI smoke tests. Run only against a fresh isolated demo. Requires Python Playwright and a local Chromium binary.
+Run against an isolated `node bin/cli.js demo` instance only.
+python scripts/measurement-smoke.py /path/to/demo-data --offline --output /tmp/tm-ui
+"""
+import argparse,json,pathlib,os,urllib.request,urllib.error,urllib.parse,subprocess
+from playwright.sync_api import sync_playwright
+p=argparse.ArgumentParser();p.add_argument('data_dir');p.add_argument('--output',default='measurement-browser-results');p.add_argument('--chromium',default='/usr/bin/chromium');p.add_argument('--offline',action='store_true',help='Render app files on about:blank and bridge test fetches to the real local API without browser navigation');a=p.parse_args()
+out=pathlib.Path(a.output);out.mkdir(parents=True,exist_ok=True)
+r=json.loads(pathlib.Path(a.data_dir,'runtime.json').read_text())
+if not r.get('demo'):raise SystemExit('Refusing non-demo instance')
+browser_origin=r['origin']
+url=browser_origin+'/#key='+r['token'];checks=[];errors=[];console_errors=[];requests=[]
+def passed(name):checks.append(name)
+with sync_playwright() as pw:
+    browser=pw.chromium.launch(executable_path=a.chromium,args=['--no-sandbox'],headless=True)
+    page=browser.new_page(viewport={'width':1440,'height':1050},device_scale_factor=1)
+    page.on('pageerror',lambda e:errors.append(str(e)))
+    page.on('console',lambda m:console_errors.append(m.text) if m.type=='error' else None)
+    page.on('request',lambda q:requests.append(q.url))
+    if a.offline:
+        web=pathlib.Path(__file__).resolve().parent.parent/'web'
+        html=(web/'index.html').read_text().replace('<link rel="stylesheet" href="/style.css">','').replace('<script defer src="/app.js"></script>','').replace('<script defer src="/measurements.js"></script>','').replace('<script defer src="/history.js"></script>','').replace('<script defer src="/rates.js"></script>','').replace('<script defer src="/data-controls.js"></script>','')
+        page.set_content(html)
+        page.add_style_tag(content=(web/'style.css').read_text())
+        def test_fetch(endpoint,options):
+            if not endpoint.startswith('/api/'): raise ValueError('Only this app API may be bridged')
+            requests.append(r['origin']+endpoint)
+            body=options.get('body')
+            headers=options.get('headers',{})
+            target=urllib.request.Request(r['origin']+endpoint,data=body.encode() if body else None,headers=headers,method=options.get('method','GET'))
+            try: response=urllib.request.urlopen(target,timeout=10)
+            except urllib.error.HTTPError as err: response=err
+            with response: return {'body':response.read().decode(),'status':response.status,'headers':dict(response.headers)}
+        page.expose_function('__tmTestFetch',test_fetch)
+        page.evaluate('''token=>{Object.defineProperty(window,'sessionStorage',{value:{getItem:()=>token,setItem(){}}});window.fetch=async(endpoint,options={})=>{const v=await window.__tmTestFetch(endpoint,options);return new Response(v.body,{status:v.status,headers:v.headers});};}''',r['token'])
+        page.add_script_tag(content=(web/'app.js').read_text());page.add_script_tag(content=(web/'measurements.js').read_text());page.add_script_tag(content=(web/'history.js').read_text());page.add_script_tag(content=(web/'rates.js').read_text());page.add_script_tag(content=(web/'data-controls.js').read_text())
+    else: page.goto(url)
+    def api(endpoint,body=None):
+        req=urllib.request.Request(r['origin']+endpoint,data=json.dumps(body).encode() if body is not None else None,headers={'Authorization':'Bearer '+r['token'],'Content-Type':'application/json'})
+        with urllib.request.urlopen(req,timeout=30) as resp:return json.loads(resp.read())
+    page.wait_for_function("document.querySelector('#recent-table tr td')?.textContent !== '' && window.TMHistory !== undefined")
+    page.click('[data-scope="all"]')
+
+    stamp=page.evaluate('new Date().toISOString()')
+    def add(name,fmt,usage):
+        return api('/api/usage',{'schema':'token-meter.usage.v1','format':fmt,'modelProvider':'google','model':'gemini-3.8-flash','requestId':name,'timestamp':stamp,'modality':'text','usage':usage})
+    first=add('thinking-ui-known','gemini',{'promptTokenCount':15000,'cachedContentTokenCount':5000,'candidatesTokenCount':500,'thoughtsTokenCount':1500,'totalTokenCount':17000})
+    page.select_option('#provider','generic');page.wait_for_function("lastData?.summary.records===1")
+    for field,value in [('in-tokens','15,000'),('response-tokens','500'),('thinking-tokens','1,500'),('out-tokens','2,000'),('total-tokens','17,000')]:assert page.locator('#'+field).inner_text()==value,(field,page.locator('#'+field).inner_text())
+    passed('Five top metrics display IN 15000, non-thinking OUT 500, THINKING 1500, total output 2000, TOTAL 17000')
+    assert page.locator('#response-cost').inner_text()=='$0.001875'
+    assert page.locator('#thinking-cost').inner_text()=='$0.005625'
+    assert page.locator('#output-cost').inner_text()=='$0.0075'
+    assert page.locator('#total-cost').inner_text()=='$0.015375'
+    passed('Response and thinking costs exactly partition the already-priced output; total is not double charged')
+    assert '실제 청구액 아님' in page.locator('#bar-cost').inner_text()
+    assert '추가 요금이 아닙니다' in page.locator('#output-accounting-note').locator('..').inner_text()
+    passed('Output parts are explicitly described as a breakdown, not additional charges')
+    page.evaluate('window.scrollTo(0,0)');page.screenshot(path=str(out/'thinking-dashboard.png'),full_page=False)
+    page.select_option('#history-provider','generic');page.locator('#history-form button[type=submit]').click();page.wait_for_function("document.querySelectorAll('#recent-table tr').length===1")
+    row=page.locator('#recent-table tr');assert row.locator('td').count()==13
+    for field,num in [('response','500'),('thinking','1,500'),('output','2,000')]:assert num in row.locator('[data-metric="'+field+'"]').inner_text()
+    passed('History table exposes all output subcounts and original total in separate columns')
+    row.get_by_role('button',name='계산 근거').click();page.wait_for_function("document.querySelector('#price-detail-dialog').open")
+    proof=page.locator('.output-split-proof').inner_text();assert '2,000 = OUT 500 + THINKING 1,500' in proof
+    assert 'THINKING은 전체 출력 비용에 이미 포함' in page.locator('#price-detail-content').inner_text()
+    page.locator('#price-detail-dialog').screenshot(path=str(out/'thinking-detail.png'));page.locator('[data-close="price-detail-dialog"]').click()
+    passed('Request detail shows conservation equation and independent token-times-rate cost table')
+    # Render the actual PiP component without claiming native window or OS topmost support.
+    page.evaluate("pipWindow={closed:false,document:document.implementation.createHTMLDocument('Preview')};renderPip();")
+    assert page.evaluate("pipWindow.document.querySelectorAll('.pip-metric').length===5")
+    markup=page.evaluate('pipWindow.document.body.outerHTML');mini=browser.new_page(viewport={'width':1040,'height':250});mini.set_content(markup);mini.add_style_tag(content=(pathlib.Path(__file__).resolve().parent.parent/'web'/'style.css').read_text());mini.screenshot(path=str(out/'thinking-mini-bar.png'));mini.close()
+    passed('Actual mini-bar renderer contains five token/cost groups')
+    missing=add('thinking-ui-missing','normalized',{'input':100,'output':15})
+    mismatch=add('thinking-ui-mismatch','normalized',{'input':100,'output':100,'thinkingOutput':101})
+    zero=add('thinking-ui-zero','normalized',{'input':100,'output':100,'thinkingOutput':0})
+    page.evaluate('load()');page.wait_for_function("lastData.summary.records===4")
+    assert page.locator('#out-tokens').inner_text()=='2,215';assert page.locator('#total-tokens').inner_text()=='17,515'
+    assert '관측분' in page.locator('#thinking-tokens').inner_text()
+    assert '115' in page.locator('#output-accounting-note').inner_text()
+    assert '2건은 세부값이 없거나 충돌' in page.locator('#output-accounting-note').inner_text()
+    passed('Mixed missing/mismatched records show partial breakdown with 115 unclassified output, not zero thinking')
+    assert page.locator('#output-cost').inner_text()=='$0.00830625';passed('Unknown thinking partition does not invalidate a known overall output charge')
+    page.select_option('#history-output','complete');page.locator('#history-form button[type=submit]').click();page.wait_for_function("document.querySelectorAll('#recent-table tr').length===2")
+    passed('New output-breakdown history filter selects two explicit complete records')
+    page.select_option('#history-output','unresolved');page.locator('#history-form button[type=submit]').click();page.wait_for_function("document.querySelectorAll('#recent-table tr').length===2 && document.querySelector('#recent-table').textContent.includes('분해 미확인')")
+    assert page.locator('#recent-table [data-metric="thinking"]').all_inner_texts()==['분해 미확인','분해 미확인']
+    passed('Unresolved filter selects missing/mismatch records with no fabricated thinking counts')
+    page.select_option('#history-output','mismatch');page.locator('#history-form button[type=submit]').click();page.wait_for_function("document.querySelectorAll('#recent-table tr').length===1")
+    page.locator('#recent-table button').click();page.wait_for_function("document.querySelector('#price-detail-dialog').open");assert 'mismatch' in page.locator('#price-detail-content').inner_text();assert '일치하지 않습니다' in page.locator('#price-detail-content').inner_text();page.locator('[data-close="price-detail-dialog"]').click()
+    passed('Conflict detail explains mismatch while preserving original overall output')
+    # Generic source identities persist to actual monthly revision journal.
+    cfg=api('/api/config');raw=''.join(f.read_text() for f in pathlib.Path(cfg['dataDir'],'usage-log').glob('*.jsonl'))
+    assert 'thinkingOutput' in raw and 'outputSplitStatus' in raw
+    before=api('/api/history?provider=generic')['totalStored'];api('/api/scan',{});assert api('/api/history?provider=generic')['totalStored']==before
+    passed('Monthly logs retain output split metadata and scanning does not duplicate requests')
+    page.select_option('#history-output','all');page.locator('#history-form button[type=submit]').click();page.wait_for_function("document.querySelectorAll('#recent-table tr').length===4")
+    with page.expect_download() as dl:page.click('#history-jsonl')
+    dl.value.save_as(str(out/'thinking-history.jsonl'));rows=[json.loads(x) for x in (out/'thinking-history.jsonl').read_text().splitlines()];assert len(rows)==4
+    assert any(x['thinkingOutput'] is None and x['output']==15 for x in rows);assert any(x['thinkingOutput']==0 for x in rows)
+    passed('JSONL export preserves null (missing), zero and positive THINKING separately')
+    with page.expect_download() as dl:page.click('#history-csv')
+    dl.value.save_as(str(out/'thinking-history.csv'));assert all(k in (out/'thinking-history.csv').read_text() for k in ['thinkingOutput','responseOutput','billableOutput','thinkingUsd'])
+    passed('CSV export includes distinct output token and cost fields')
+    # Private DB split is clearly qualified rather than promoted to API-certified data.
+    page.select_option('#provider','antigravity');page.wait_for_function("lastData.provider==='antigravity'")
+    assert '참고' in page.locator('#thinking-tokens').inner_text();assert '실제 앱 버전' in api('/api/history?provider=antigravity')['records'][0]['outputBreakdown']['note']
+    passed('Antigravity split is visibly marked reference because private field semantics are not certified')
+    page.select_option('#provider','generic');page.wait_for_function("lastData.provider==='generic'")
+    for width in [375,430,768,1280,1440]:
+        page.set_viewport_size({'width':width,'height':1050});assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
+        assert page.evaluate("['in','response','thinking','out','total'].every(id=>['tokens','cost'].every(k=>{const e=document.querySelector('#bar-'+id+'-'+k),r=e.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight&&e.scrollWidth<=e.clientWidth+1}))")
+    passed('All ten fixed-bar fields remain visible across five tested viewport widths')
+    page.set_viewport_size({'width':430,'height':1100});page.evaluate('window.scrollTo(0,0)');page.screenshot(path=str(out/'thinking-mobile.png'),full_page=False)
+    assert not errors,errors;passed('No JavaScript errors in thinking-specific interactions')
+    browser.close()
+report={'checksPassed':len(checks),'checks':checks,'javascriptErrors':errors,'transport':'about:blank actual app + real authenticated local API' if a.offline else 'direct localhost','limitations':['All records are synthetic; no real user data','No OS topmost or actual VS Code Extension Host validation','Offline bridge does not validate browser navigation/CSP']}
+(out/'thinking-browser-report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2));print(json.dumps(report,ensure_ascii=False,indent=2))

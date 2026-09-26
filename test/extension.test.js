@@ -1,0 +1,15 @@
+'use strict';
+const test=require('node:test'),assert=require('node:assert/strict'),Module=require('node:module'),path=require('node:path');
+const {fixture,claudeRow}=require('./helpers');
+const {startServer}=require('../src/server');
+test('VS Code adapter mock: activation, status, dashboard, filters and disposal',async t=>{
+  const f=await fixture(t);await f.write('claude','a.jsonl',[claudeRow()]);const server=await startServer({dataDir:f.data});
+  const cmds=new Map(),errors=[],opened=[],executed=[],info=[],settings={dataDirectory:f.data,enabled:true,scope:'all',provider:'all'};
+  const status={show(){this.visible=true;},hide(){this.visible=false;},dispose(){this.disposed=true;}};
+  const mock={StatusBarAlignment:{Left:1},ConfigurationTarget:{Global:1},ThemeColor:class{constructor(id){this.id=id;}},MarkdownString:class{constructor(){this.value='';}appendText(v){this.value+=v;}},Uri:{parse:x=>x,file:x=>x},env:{openExternal:async x=>opened.push(x)},commands:{executeCommand:async(...args)=>executed.push(args),registerCommand:(name,fn)=>{cmds.set(name,fn);return{dispose(){cmds.delete(name);}};}},workspace:{getConfiguration:()=>({get:(k,d)=>settings[k]??d,update:async(k,v)=>{settings[k]=v;}}),onDidChangeConfiguration:()=>({dispose(){}}),openTextDocument:async x=>x},window:{createStatusBarItem:()=>status,showInformationMessage:async x=>info.push(x),showWarningMessage:async()=>{},showErrorMessage:x=>errors.push(x),showQuickPick:async choices=>choices[0],showTextDocument:async()=>{}}};
+  const original=Module._load;let extension;
+  try{Module._load=function(id,...args){if(id==='vscode')return mock;return original.call(this,id,...args);};extension=require('../src/extension');}finally{Module._load=original;}
+  const context={extensionPath:path.resolve(__dirname,'..'),subscriptions:[]};
+  try{await extension.activate(context);assert.equal(errors.length,0);assert.equal(status.visible,true);assert.ok(status.text.includes('IN 100 tok / $'));assert.ok(status.text.includes('OUT 20 tok / $'));assert.ok(status.text.includes('CACHE READ 30 tok / $'));assert.ok(status.text.includes('CACHE WRITE 15 tok / $'));assert.ok(!status.text.includes('BILLABLE')); assert.ok(status.text.includes('TOTAL 165 tok / $'));assert.match(status.tooltip.value,/IN 100 tok \/ \$/);assert.match(status.tooltip.value,/OUT 20 tok \/ \$/);assert.match(status.tooltip.value,/TOTAL 165 tok \/ \$/);assert.ok(status.tooltip.value.includes('최근 로그'));assert.equal(cmds.size,require('../package.json').contributes.commands.length);await cmds.get('tokenMeter.dashboard')();assert.ok(opened[0].startsWith(server.runtime.origin+'/#key='));await cmds.get('tokenMeter.scope')();assert.equal(settings.scope,'today');await cmds.get('tokenMeter.openUsageLogFolder')();assert.deepEqual(executed[0],['revealFileInOS',path.join(f.data,'usage-log')]);await cmds.get('tokenMeter.reanalyseAntigravity')();assert.ok(info.some(x=>x.includes('재분석 완료')));assert.equal(errors.length,0);}
+  finally{extension.deactivate();for(const d of context.subscriptions)d.dispose();await server.close();}
+});

@@ -1,0 +1,28 @@
+{
+  "checks": [
+    "Each running measurement has a visible Delete button",
+    "Delete dialog explains active cancellation and usage preservation; disabled until acknowledged",
+    "Cancel leaves active and pinned measurements unchanged",
+    "Delete active selected pinned measurement removes card, clears pin and switches view without erasing usage",
+    "Bulk delete removes exactly selected cards and clears selection",
+    "Delete all includes hidden history and requires the exact confirmation phrase",
+    "Delete all measurements preserves cumulative tokens and usage log",
+    "Whole reset discloses data scope, preservation and backup, and requires typed phrase plus acknowledgement",
+    "Cancelling full reset leaves the dataset and running measurements unchanged",
+    "Whole reset shows zero totals, empties measurements/tasks/history and retains config",
+    "All four billing components and total visibly restart at zero",
+    "Rescan and Antigravity reanalysis do not reintroduce pre-reset history",
+    "Previous dataset remains available locally as backup",
+    "A new request after reset is counted with cache and thinking splits",
+    "375px reset dialog fits viewport with accessible controls",
+    "768px reset dialog fits viewport with accessible controls",
+    "1440px reset dialog fits viewport with accessible controls",
+    "A deleted selection from another client falls back without an offline error",
+    "No uncaught JavaScript runtime errors"
+  ],
+  "passed": 19,
+  "errors": [],
+  "consoleErrors": [],
+  "mode": "offline-render-api-bridge",
+  "syntheticData": true
+}

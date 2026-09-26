@@ -1,0 +1,2128 @@
+
+> token-meter-local@0.9.0 test
+> node --test test/*.test.js
+
+TAP version 13
+# (node:5124) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# (node:5124) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Antigravity native SQLite: IN includes cache once and OUT includes reasoning once
+ok 1 - Antigravity native SQLite: IN includes cache once and OUT includes reasoning once
+  ---
+  duration_ms: 142.455856
+  type: 'test'
+  ...
+# (node:5124) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Antigravity Python fallback and native reader agree on real SQLite bytes
+ok 2 - Antigravity Python fallback and native reader agree on real SQLite bytes
+  ---
+  duration_ms: 1243.969025
+  type: 'test'
+  ...
+# (node:5124) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Antigravity source database is not modified and bodies never persist to ledger or CSV
+ok 3 - Antigravity source database is not modified and bodies never persist to ledger or CSV
+  ---
+  duration_ms: 110.338965
+  type: 'test'
+  ...
+# (node:5124) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# (node:5124) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Antigravity repeated scan, restart and copied DB deduplicate the same session
+ok 4 - Antigravity repeated scan, restart and copied DB deduplicate the same session
+  ---
+  duration_ms: 167.885178
+  type: 'test'
+  ...
+# (node:5124) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# (node:5124) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Antigravity WAL-only commits are discovered without a main DB modification
+ok 5 - Antigravity WAL-only commits are discovered without a main DB modification
+  ---
+  duration_ms: 133.52661
+  type: 'test'
+  ...
+# Subtest: Antigravity completed generation, matching step and retry are counted by invocation IDs
+ok 6 - Antigravity completed generation, matching step and retry are counted by invocation IDs
+  ---
+  duration_ms: 3.222411
+  type: 'test'
+  ...
+# (node:5124) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# (node:5124) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# (node:5124) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Antigravity late identity aliases and timestamp survive restart without duplicate spending
+ok 7 - Antigravity late identity aliases and timestamp survive restart without duplicate spending
+  ---
+  duration_ms: 210.476342
+  type: 'test'
+  ...
+# (node:5124) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Antigravity missing timestamp is excluded from calendar buckets, not assigned file mtime
+ok 8 - Antigravity missing timestamp is excluded from calendar buckets, not assigned file mtime
+  ---
+  duration_ms: 122.401569
+  type: 'test'
+  ...
+# Subtest: Antigravity exact model spellings and efforts are mapped without inventing numeric enum names
+ok 9 - Antigravity exact model spellings and efforts are mapped without inventing numeric enum names
+  ---
+  duration_ms: 1.078411
+  type: 'test'
+  ...
+# Subtest: Antigravity model switches apply each generation price instead of the final model price
+ok 10 - Antigravity model switches apply each generation price instead of the final model price
+  ---
+  duration_ms: 2.153399
+  type: 'test'
+  ...
+# Subtest: Antigravity explicit output total is authoritative while inconsistent details stay marked
+ok 11 - Antigravity explicit output total is authoritative while inconsistent details stay marked
+  ---
+  duration_ms: 1.07575
+  type: 'test'
+  ...
+# Subtest: Antigravity unknown cache-write TTL retains input count but marks input price incomplete
+ok 12 - Antigravity unknown cache-write TTL retains input count but marks input price incomplete
+  ---
+  duration_ms: 1.083649
+  type: 'test'
+  ...
+# (node:5124) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Antigravity malformed row and identity-less step expose partial coverage
+ok 13 - Antigravity malformed row and identity-less step expose partial coverage
+  ---
+  duration_ms: 94.772607
+  type: 'test'
+  ...
+# Subtest: Antigravity no-identity generation uses stable per-row ID rather than discarding usage
+ok 14 - Antigravity no-identity generation uses stable per-row ID rather than discarding usage
+  ---
+  duration_ms: 0.695032
+  type: 'test'
+  ...
+# Subtest: Antigravity unsupported legacy PB is visible, never displayed as zero-cost support
+ok 15 - Antigravity unsupported legacy PB is visible, never displayed as zero-cost support
+  ---
+  duration_ms: 10.27808
+  type: 'test'
+  ...
+# (node:5124) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Antigravity unknown DB schema is a diagnostic, not fabricated usage
+ok 16 - Antigravity unknown DB schema is a diagnostic, not fabricated usage
+  ---
+  duration_ms: 79.173321
+  type: 'test'
+  ...
+# (node:5124) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Antigravity deleted original database retains historical spend with history-only health
+ok 17 - Antigravity deleted original database retains historical spend with history-only health
+  ---
+  duration_ms: 77.452096
+  type: 'test'
+  ...
+# Subtest: Antigravity database and WAL symlinks are refused
+ok 18 - Antigravity database and WAL symlinks are refused
+  ---
+  duration_ms: 12.182265
+  type: 'test'
+  ...
+# Subtest: Antigravity missing Python fallback runtime returns explicit availability error
+ok 19 - Antigravity missing Python fallback runtime returns explicit availability error
+  ---
+  duration_ms: 11.874492
+  type: 'test'
+  ...
+# Subtest: Antigravity protobuf rejects truncated, oversized, ambiguous and overflow values
+ok 20 - Antigravity protobuf rejects truncated, oversized, ambiguous and overflow values
+  ---
+  duration_ms: 0.655587
+  type: 'test'
+  ...
+# (node:5124) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Antigravity API equivalent label cannot be presented as subscription charge
+ok 21 - Antigravity API equivalent label cannot be presented as subscription charge
+  ---
+  duration_ms: 110.33895
+  type: 'test'
+  ...
+# Subtest: Dated Gemini reference pricing stops at its cutoff and rejects malformed validity ranges
+ok 22 - Dated Gemini reference pricing stops at its cutoff and rejects malformed validity ranges
+  ---
+  duration_ms: 4.832617
+  type: 'test'
+  ...
+# Subtest: Exactly four disjoint items: general, read, write, output; thinking is not a fifth charge
+ok 23 - Exactly four disjoint items: general, read, write, output; thinking is not a fifth charge
+  ---
+  duration_ms: 10.113393
+  type: 'test'
+  ...
+# Subtest: Known zero write has zero spend but still shows its actual 100万-token tariff
+ok 24 - Known zero write has zero spend but still shows its actual 100万-token tariff
+  ---
+  duration_ms: 1.929626
+  type: 'test'
+  ...
+# Subtest: Missing write counter is a reference zero, not evidence no writes occurred
+ok 25 - Missing write counter is a reference zero, not evidence no writes occurred
+  ---
+  duration_ms: 1.827123
+  type: 'test'
+  ...
+# Subtest: THINKING redistribution cannot alter OUT or overall price
+ok 26 - THINKING redistribution cannot alter OUT or overall price
+  ---
+  duration_ms: 2.446138
+  type: 'test'
+  ...
+# Subtest: Missing THINKING breakdown still keeps known OUT total and money
+ok 27 - Missing THINKING breakdown still keeps known OUT total and money
+  ---
+  duration_ms: 1.296411
+  type: 'test'
+  ...
+# Subtest: Model and period averages are never substituted for distinct tariffs
+ok 28 - Model and period averages are never substituted for distinct tariffs
+  ---
+  duration_ms: 1.368903
+  type: 'test'
+  ...
+# Subtest: Claude TTL write buckets are one top-level item with separate detail rates
+ok 29 - Claude TTL write buckets are one top-level item with separate detail rates
+  ---
+  duration_ms: 1.261646
+  type: 'test'
+  ...
+# Subtest: Unknown-TTL write cost remains null without hiding known input/read/output amounts
+ok 30 - Unknown-TTL write cost remains null without hiding known input/read/output amounts
+  ---
+  duration_ms: 1.107473
+  type: 'test'
+  ...
+# Subtest: Unknown tariff with positive usage is not manufactured as free
+ok 31 - Unknown tariff with positive usage is not manufactured as free
+  ---
+  duration_ms: 3.099711
+  type: 'test'
+  ...
+# Subtest: Empty collector is absent observations; a measured baseline is verified display zero only
+ok 32 - Empty collector is absent observations; a measured baseline is verified display zero only
+  ---
+  duration_ms: 1.131515
+  type: 'test'
+  ...
+# Subtest: Frozen pre-breakdown result keeps total but does not relabel inclusive input as regular input
+ok 33 - Frozen pre-breakdown result keeps total but does not relabel inclusive input as regular input
+  ---
+  duration_ms: 0.330423
+  type: 'test'
+  ...
+# Subtest: Inconsistent input components fail reconciliation rather than changing the stored total
+ok 34 - Inconsistent input components fail reconciliation rather than changing the stored total
+  ---
+  duration_ms: 0.678161
+  type: 'test'
+  ...
+# Subtest: Independent billing view does not mutate events, summaries, price snapshots or unknown flags
+ok 35 - Independent billing view does not mutate events, summaries, price snapshots or unknown flags
+  ---
+  duration_ms: 3.992848
+  type: 'test'
+  ...
+# Subtest: A record projection and an aggregated one-request projection agree on tokens and money
+ok 36 - A record projection and an aggregated one-request projection agree on tokens and money
+  ---
+  duration_ms: 3.078049
+  type: 'test'
+  ...
+# Subtest: Combine used by per-tool reset rows retains each component price and its model rates
+ok 37 - Combine used by per-tool reset rows retains each component price and its model rates
+  ---
+  duration_ms: 4.90797
+  type: 'test'
+  ...
+# Subtest: Zero model-reset row has four zero components after combination
+ok 38 - Zero model-reset row has four zero components after combination
+  ---
+  duration_ms: 0.343625
+  type: 'test'
+  ...
+# Subtest: A combination with incomplete input metadata remains incomplete, not a fabricated general-input sum
+ok 39 - A combination with incomplete input metadata remains incomplete, not a fabricated general-input sum
+  ---
+  duration_ms: 0.866403
+  type: 'test'
+  ...
+# Subtest: Status bar IN excludes cache, OUT includes reasoning once, each has its own cost
+ok 40 - Status bar IN excludes cache, OUT includes reasoning once, each has its own cost
+  ---
+  duration_ms: 28.549629
+  type: 'test'
+  ...
+# Subtest: Screenshot-like exact decimal arithmetic: normal/read/write/output reproduce total without changing spend
+ok 41 - Screenshot-like exact decimal arithmetic: normal/read/write/output reproduce total without changing spend
+  ---
+  duration_ms: 2.814887
+  type: 'test'
+  ...
+# Subtest: Pricing modes and context bands keep their stored applied rates; no unit/view repricing
+ok 42 - Pricing modes and context bands keep their stored applied rates; no unit/view repricing
+  ---
+  duration_ms: 0.799742
+  type: 'test'
+  ...
+# Subtest: Input JSON and CSV retain inclusive field semantics and include aggregate write dollars
+ok 43 - Input JSON and CSV retain inclusive field semantics and include aggregate write dollars
+  ---
+  duration_ms: 56.049012
+  type: 'test'
+  ...
+# Subtest: Measurement CSV carries disjoint inputs and write dollars without erasing saved output
+ok 44 - Measurement CSV carries disjoint inputs and write dollars without erasing saved output
+  ---
+  duration_ms: 50.387751
+  type: 'test'
+  ...
+# Subtest: Browser UMD and Node module produce identical projections without eval or external dependencies
+ok 45 - Browser UMD and Node module produce identical projections without eval or external dependencies
+  ---
+  duration_ms: 5.925354
+  type: 'test'
+  ...
+# Subtest: Billing script is served as a same-origin static asset; data still needs authentication
+ok 46 - Billing script is served as a same-origin static asset; data still needs authentication
+  ---
+  duration_ms: 107.217355
+  type: 'test'
+  ...
+# Subtest: Primary HTML presents just IN / CACHE READ / CACHE WRITE / OUT, details are collapsed by default
+ok 47 - Primary HTML presents just IN / CACHE READ / CACHE WRITE / OUT, details are collapsed by default
+  ---
+  duration_ms: 1.29886
+  type: 'test'
+  ...
+# Subtest: models.dev import uses provider names, text modalities and input-size tiers
+ok 48 - models.dev import uses provider names, text modalities and input-size tiers
+  ---
+  duration_ms: 3.103628
+  type: 'test'
+  ...
+# Subtest: OpenRouter per-token rates convert to per-million without losing explicit free pricing
+ok 49 - OpenRouter per-token rates convert to per-million without losing explicit free pricing
+  ---
+  duration_ms: 0.485905
+  type: 'test'
+  ...
+# Subtest: OpenRouter does not silently ingest a truncated/paginated model list
+ok 50 - OpenRouter does not silently ingest a truncated/paginated model list
+  ---
+  duration_ms: 0.662796
+  type: 'test'
+  ...
+# Subtest: Malformed, negative, tiny and non-text-only catalog prices are not guessed
+ok 51 - Malformed, negative, tiny and non-text-only catalog prices are not guessed
+  ---
+  duration_ms: 0.433292
+  type: 'test'
+  ...
+# Subtest: Catalog refresh caches valid data, handles 304 and keeps last good data on failure
+ok 52 - Catalog refresh caches valid data, handles 304 and keeps last good data on failure
+  ---
+  duration_ms: 67.870732
+  type: 'test'
+  ...
+# Subtest: Disabled automatic refresh makes zero requests; manual refresh is explicit
+ok 53 - Disabled automatic refresh makes zero requests; manual refresh is explicit
+  ---
+  duration_ms: 17.680379
+  type: 'test'
+  ...
+# Subtest: Concurrent refreshes are coalesced into one request
+ok 54 - Concurrent refreshes are coalesced into one request
+  ---
+  duration_ms: 34.129253
+  type: 'test'
+  ...
+# Subtest: Corrupt catalog cache fails closed while allowing built-in rates
+ok 55 - Corrupt catalog cache fails closed while allowing built-in rates
+  ---
+  duration_ms: 8.731044
+  type: 'test'
+  ...
+# Subtest: Network URL policy forbids redirects-by-URL, credentials, local literals and unapproved hosts
+ok 56 - Network URL policy forbids redirects-by-URL, credentials, local literals and unapproved hosts
+  ---
+  duration_ms: 6.099813
+  type: 'test'
+  ...
+# Subtest: Network DNS policy rejects loopback, private, mapped and link-local IPs
+ok 57 - Network DNS policy rejects loopback, private, mapped and link-local IPs
+  ---
+  duration_ms: 1.904061
+  type: 'test'
+  ...
+# Subtest: Catalog configuration validates source allowlist and bounded interval
+ok 58 - Catalog configuration validates source allowlist and bounded interval
+  ---
+  duration_ms: 0.648461
+  type: 'test'
+  ...
+# Subtest: Authenticated refresh applies new model pricing and preserves previous event prices
+ok 59 - Authenticated refresh applies new model pricing and preserves previous event prices
+  ---
+  duration_ms: 172.120506
+  type: 'test'
+  ...
+# Subtest: Incomplete community prices cannot erase known long-context pricing
+ok 60 - Incomplete community prices cannot erase known long-context pricing
+  ---
+  duration_ms: 0.937574
+  type: 'test'
+  ...
+# Subtest: Repeated scan, duplicate files and process restart do not multiply usage
+ok 61 - Repeated scan, duplicate files and process restart do not multiply usage
+  ---
+  duration_ms: 59.436867
+  type: 'test'
+  ...
+# Subtest: Incremental reader processes only appended bytes
+ok 62 - Incremental reader processes only appended bytes
+  ---
+  duration_ms: 23.145202
+  type: 'test'
+  ...
+# Subtest: Unfinished UTF-8 JSONL line is reread without persisting raw bytes
+ok 63 - Unfinished UTF-8 JSONL line is reread without persisting raw bytes
+  ---
+  duration_ms: 27.001506
+  type: 'test'
+  ...
+# Subtest: Claude streaming duplicates keep the fullest observation once
+ok 64 - Claude streaming duplicates keep the fullest observation once
+  ---
+  duration_ms: 20.834114
+  type: 'test'
+  ...
+# Subtest: Same total with newly known TTL fills incomplete cost
+ok 65 - Same total with newly known TTL fills incomplete cost
+  ---
+  duration_ms: 19.192354
+  type: 'test'
+  ...
+# Subtest: Gemini JSON snapshot replacement updates a message rather than duplicating
+ok 66 - Gemini JSON snapshot replacement updates a message rather than duplicating
+  ---
+  duration_ms: 20.342595
+  type: 'test'
+  ...
+# Subtest: Gemini JSONL metadata and token record are collected
+ok 67 - Gemini JSONL metadata and token record are collected
+  ---
+  duration_ms: 7.672414
+  type: 'test'
+  ...
+# Subtest: Ledger, checkpoints and CSV contain no prompt/response content
+ok 68 - Ledger, checkpoints and CSV contain no prompt/response content
+  ---
+  duration_ms: 14.919506
+  type: 'test'
+  ...
+# Subtest: Completed malformed JSON remains diagnosed on later scans
+ok 69 - Completed malformed JSON remains diagnosed on later scans
+  ---
+  duration_ms: 10.003841
+  type: 'test'
+  ...
+# Subtest: Symlinked logs and roots are not followed
+ok 70 - Symlinked logs and roots are not followed
+  ---
+  duration_ms: 13.651044
+  type: 'test'
+  ...
+# Subtest: Deleted logs do not erase observed historical spending
+ok 71 - Deleted logs do not erase observed historical spending
+  ---
+  duration_ms: 11.579368
+  type: 'test'
+  ...
+# Subtest: Known prices remain frozen; unsupported model is filled by custom price
+ok 72 - Known prices remain frozen; unsupported model is filled by custom price
+  ---
+  duration_ms: 16.56232
+  type: 'test'
+  ...
+# Subtest: Concurrent saves preserve the latest coherent state
+ok 73 - Concurrent saves preserve the latest coherent state
+  ---
+  duration_ms: 5.542594
+  type: 'test'
+  ...
+# Subtest: Task intervals start inclusive and end exclusive
+ok 74 - Task intervals start inclusive and end exclusive
+  ---
+  duration_ms: 8.728706
+  type: 'test'
+  ...
+# Subtest: Asia/Seoul daily boundary is correct and input/output sums balance
+ok 75 - Asia/Seoul daily boundary is correct and input/output sums balance
+  ---
+  duration_ms: 11.30254
+  type: 'test'
+  ...
+# Subtest: Missing timestamp belongs only to all-time usage
+ok 76 - Missing timestamp belongs only to all-time usage
+  ---
+  duration_ms: 9.193824
+  type: 'test'
+  ...
+# Subtest: Corrupt ledger is refused, never reset to zero
+ok 77 - Corrupt ledger is refused, never reset to zero
+  ---
+  duration_ms: 7.230475
+  type: 'test'
+  ...
+# Subtest: VS Code delete and full reset commands require confirmation and clear pinned state (mock host)
+ok 78 - VS Code delete and full reset commands require confirmation and clear pinned state (mock host)
+  ---
+  duration_ms: 384.741759
+  type: 'test'
+  ...
+# Subtest: Destructive HTTP APIs require bearer auth and allowed Origin/Host
+ok 79 - Destructive HTTP APIs require bearer auth and allowed Origin/Host
+  ---
+  duration_ms: 204.371515
+  type: 'test'
+  ...
+# Subtest: HTTP delete removes active/pinned card, frees pin and stale selected view falls back to cumulative
+ok 80 - HTTP delete removes active/pinned card, frees pin and stale selected view falls back to cumulative
+  ---
+  duration_ms: 75.775768
+  type: 'test'
+  ...
+# Subtest: HTTP reset rejects weak confirmation and returns new active storage and empty usage/history
+ok 81 - HTTP reset rejects weak confirmation and returns new active storage and empty usage/history
+  ---
+  duration_ms: 47.791926
+  type: 'test'
+  ...
+# Subtest: Concurrent reset retry with the same key is idempotent and does not create two epochs
+ok 82 - Concurrent reset retry with the same key is idempotent and does not create two epochs
+  ---
+  duration_ms: 36.020596
+  type: 'test'
+  ...
+# Subtest: Full reset followed by usage submission persists a new journal, not old backup history
+ok 83 - Full reset followed by usage submission persists a new journal, not old backup history
+  ---
+  duration_ms: 56.791504
+  type: 'test'
+  ...
+# Subtest: Deleting measurements from another client while pinned leaves status and exports coherent
+ok 84 - Deleting measurements from another client while pinned leaves status and exports coherent
+  ---
+  duration_ms: 55.132871
+  type: 'test'
+  ...
+# Subtest: Delete and reset handlers do not accept GET side effects or unsupported DELETE methods
+ok 85 - Delete and reset handlers do not accept GET side effects or unsupported DELETE methods
+  ---
+  duration_ms: 21.943333
+  type: 'test'
+  ...
+# Subtest: New data control script is served locally, without inline secrets or external scripts
+ok 86 - New data control script is served locally, without inline secrets or external scripts
+  ---
+  duration_ms: 25.98199
+  type: 'test'
+  ...
+# Subtest: Deleted measurement export must fail rather than silently export unrelated cumulative usage
+ok 87 - Deleted measurement export must fail rather than silently export unrelated cumulative usage
+  ---
+  duration_ms: 43.052556
+  type: 'test'
+  ...
+# Subtest: Deleting 500 selected measurements fits the bounded deletion HTTP payload
+ok 88 - Deleting 500 selected measurements fits the bounded deletion HTTP payload
+  ---
+  duration_ms: 44.916588
+  type: 'test'
+  ...
+# Subtest: Deleting a running pinned measurement removes it, clears pin/undo and preserves raw usage
+ok 89 - Deleting a running pinned measurement removes it, clears pin/undo and preserves raw usage
+  ---
+  duration_ms: 126.130344
+  type: 'test'
+  ...
+# Subtest: Delete handles ended, archived and cancelled runs; duplicates are idempotent
+ok 90 - Delete handles ended, archived and cancelled runs; duplicates are idempotent
+  ---
+  duration_ms: 62.143064
+  type: 'test'
+  ...
+# Subtest: Bulk deletion removes only selected measurements and leaves other active runs
+ok 91 - Bulk deletion removes only selected measurements and leaves other active runs
+  ---
+  duration_ms: 38.545871
+  type: 'test'
+  ...
+# Subtest: Delete-all measurements clears hidden/active records but not usage or task history
+ok 92 - Delete-all measurements clears hidden/active records but not usage or task history
+  ---
+  duration_ms: 45.680092
+  type: 'test'
+  ...
+# Subtest: Measurement delete requires explicit confirmation; invalid lists never change state
+ok 93 - Measurement delete requires explicit confirmation; invalid lists never change state
+  ---
+  duration_ms: 19.24566
+  type: 'test'
+  ...
+# Subtest: Delete write failure rolls back in-memory measurement state
+ok 94 - Delete write failure rolls back in-memory measurement state
+  ---
+  duration_ms: 31.877001
+  type: 'test'
+  ...
+# Subtest: Full reset clears active usage, logs, tasks and measurements and keeps configuration and originals byte-identical
+ok 95 - Full reset clears active usage, logs, tasks and measurements and keeps configuration and originals byte-identical
+  ---
+  duration_ms: 34.098932
+  type: 'test'
+  ...
+# Subtest: Repeated scans and a restart do not reimport old logs after full reset
+ok 96 - Repeated scans and a restart do not reimport old logs after full reset
+  ---
+  duration_ms: 32.214959
+  type: 'test'
+  ...
+# Subtest: New requests after reset are counted and journaled once
+ok 97 - New requests after reset are counted and journaled once
+  ---
+  duration_ms: 62.063509
+  type: 'test'
+  ...
+# Subtest: Late old files and timestamp-less new records are excluded, not treated as fresh spend
+ok 98 - Late old files and timestamp-less new records are excluded, not treated as fresh spend
+  ---
+  duration_ms: 50.646462
+  type: 'test'
+  ...
+# Subtest: Streaming request crossing reset contributes only positive new tokens; repeated reset uses raw counters
+ok 99 - Streaming request crossing reset contributes only positive new tokens; repeated reset uses raw counters
+  ---
+  duration_ms: 48.270392
+  type: 'test'
+  ...
+# Subtest: Input cache and THINKING splits remain non-overlapping after reset
+ok 100 - Input cache and THINKING splits remain non-overlapping after reset
+  ---
+  duration_ms: 19.586738
+  type: 'test'
+  ...
+# Subtest: Repricing or model/counter metadata changes alone after reset create no usage
+ok 101 - Repricing or model/counter metadata changes alone after reset create no usage
+  ---
+  duration_ms: 27.7556
+  type: 'test'
+  ...
+# Subtest: Codex cumulative snapshots preserve their checkpoint and count only later deltas
+ok 102 - Codex cumulative snapshots preserve their checkpoint and count only later deltas
+  ---
+  duration_ms: 64.24861
+  type: 'test'
+  ...
+# Subtest: Copied files and forced source replay cannot resurrect baseline requests
+ok 103 - Copied files and forced source replay cannot resurrect baseline requests
+  ---
+  duration_ms: 20.695714
+  type: 'test'
+  ...
+# (node:5198) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# (node:5198) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# (node:5198) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# (node:5198) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# (node:5198) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Antigravity reset and manual reanalysis preserve DB hashes and old IDs; new generation counts once
+ok 104 - Antigravity reset and manual reanalysis preserve DB hashes and old IDs; new generation counts once
+  ---
+  duration_ms: 282.672355
+  type: 'test'
+  ...
+# Subtest: Reset key is idempotent and a stale epoch confirmation cannot reset a newer dataset
+ok 105 - Reset key is idempotent and a stale epoch confirmation cannot reset a newer dataset
+  ---
+  duration_ms: 56.090278
+  type: 'test'
+  ...
+# Subtest: Full reset rejects absent confirmation, stale IDs and invalid keys without mutation
+ok 106 - Full reset rejects absent confirmation, stale IDs and invalid keys without mutation
+  ---
+  duration_ms: 20.990758
+  type: 'test'
+  ...
+# Subtest: Preparation failure leaves old pointer/data active and old measurement intact
+ok 107 - Preparation failure leaves old pointer/data active and old measurement intact
+  ---
+  duration_ms: 24.039974
+  type: 'test'
+  ...
+# Subtest: Pointer commit failure after preparation leaves old active dataset unchanged
+ok 108 - Pointer commit failure after preparation leaves old active dataset unchanged
+  ---
+  duration_ms: 43.825774
+  type: 'test'
+  ...
+# Subtest: Corrupt reset pointer or missing active ledger fails closed instead of replaying old history
+ok 109 - Corrupt reset pointer or missing active ledger fails closed instead of replaying old history
+  ---
+  duration_ms: 25.753114
+  type: 'test'
+  ...
+# Subtest: Missing committed pointer fails closed and symlink epoch directory is rejected
+ok 110 - Missing committed pointer fails closed and symlink epoch directory is rejected
+  ---
+  duration_ms: 34.424205
+  type: 'test'
+  ...
+# Subtest: New measurements after full reset work against post-reset usage rather than historical raw counters
+ok 111 - New measurements after full reset work against post-reset usage rather than historical raw counters
+  ---
+  duration_ms: 23.353042
+  type: 'test'
+  ...
+# Subtest: Usage log and backups contain only safe metadata, no original prompt sentinel
+ok 112 - Usage log and backups contain only safe metadata, no original prompt sentinel
+  ---
+  duration_ms: 25.602278
+  type: 'test'
+  ...
+# Subtest: History cursor is scoped to the active epoch; old pages are rejected after reset
+ok 113 - History cursor is scoped to the active epoch; old pages are rejected after reset
+  ---
+  duration_ms: 26.005308
+  type: 'test'
+  ...
+# Subtest: Deleting a record frees the measurement storage quota instead of merely hiding it
+ok 114 - Deleting a record frees the measurement storage quota instead of merely hiding it
+  ---
+  duration_ms: 29.681791
+  type: 'test'
+  ...
+# Subtest: Status line pairs disjoint IN, READ, WRITE, OUT and TOTAL counts with their individual costs
+ok 115 - Status line pairs disjoint IN, READ, WRITE, OUT and TOTAL counts with their individual costs
+  ---
+  duration_ms: 31.040103
+  type: 'test'
+  ...
+# Subtest: Exact status mode does not round token counts
+ok 116 - Exact status mode does not round token counts
+  ---
+  duration_ms: 1.321872
+  type: 'test'
+  ...
+# Subtest: Partly unknown input does not hide the known output or present a confirmed total
+ok 117 - Partly unknown input does not hide the known output or present a confirmed total
+  ---
+  duration_ms: 0.967117
+  type: 'test'
+  ...
+# Subtest: No observations keep all three placeholders but do not display a zero bill
+ok 118 - No observations keep all three placeholders but do not display a zero bill
+  ---
+  duration_ms: 0.484054
+  type: 'test'
+  ...
+# Subtest: Explicit zero cost is distinct from an unpriced model
+ok 119 - Explicit zero cost is distinct from an unpriced model
+  ---
+  duration_ms: 0.587842
+  type: 'test'
+  ...
+# Subtest: Tiny positive costs remain positive at the ledger precision
+ok 120 - Tiny positive costs remain positive at the ledger precision
+  ---
+  duration_ms: 0.849927
+  type: 'test'
+  ...
+# Subtest: Recent API records include all six values from the same stored price snapshot
+ok 121 - Recent API records include all six values from the same stored price snapshot
+  ---
+  duration_ms: 71.893179
+  type: 'test'
+  ...
+# Subtest: Legacy Gemini identity is not misrepresented as Antigravity support
+ok 122 - Legacy Gemini identity is not misrepresented as Antigravity support
+  ---
+  duration_ms: 2.634843
+  type: 'test'
+  ...
+# Subtest: Generic OpenAI import normalizes cached/reasoning subsets once
+ok 123 - Generic OpenAI import normalizes cached/reasoning subsets once
+  ---
+  duration_ms: 7.563811
+  type: 'test'
+  ...
+# Subtest: More-model seed rules pass schema validation and retain provider namespaces
+ok 124 - More-model seed rules pass schema validation and retain provider namespaces
+  ---
+  duration_ms: 1.81802
+  type: 'test'
+  ...
+# Subtest: Same model name cannot apply a different supplier price
+ok 125 - Same model name cannot apply a different supplier price
+  ---
+  duration_ms: 1.796442
+  type: 'test'
+  ...
+# Subtest: OpenRouter long-context boundary affects input, cache and output exactly at threshold
+ok 126 - OpenRouter long-context boundary affects input, cache and output exactly at threshold
+  ---
+  duration_ms: 2.131176
+  type: 'test'
+  ...
+# Subtest: Generic Anthropic preserves separate input/cache and TTL
+ok 127 - Generic Anthropic preserves separate input/cache and TTL
+  ---
+  duration_ms: 0.581301
+  type: 'test'
+  ...
+# Subtest: Generic Gemini adds thoughts only once
+ok 128 - Generic Gemini adds thoughts only once
+  ---
+  duration_ms: 1.101623
+  type: 'test'
+  ...
+# Subtest: Explicit local Ollama is zero API token fee, not zero hardware cost
+ok 129 - Explicit local Ollama is zero API token fee, not zero hardware cost
+  ---
+  duration_ms: 1.062243
+  type: 'test'
+  ...
+# Subtest: Multimodal or undeclared modality cannot be claimed fully priced
+ok 130 - Multimodal or undeclared modality cannot be claimed fully priced
+  ---
+  duration_ms: 1.714435
+  type: 'test'
+  ...
+# Subtest: Invalid usage IDs/timestamps/numbers/negative cache are rejected
+ok 131 - Invalid usage IDs/timestamps/numbers/negative cache are rejected
+  ---
+  duration_ms: 0.969332
+  type: 'test'
+  ...
+# Subtest: Generic metadata import discards content, keys and arbitrary nested data
+ok 132 - Generic metadata import discards content, keys and arbitrary nested data
+  ---
+  duration_ms: 0.717208
+  type: 'test'
+  ...
+# Subtest: Gemini identical message IDs in independent sessions remain distinct
+ok 133 - Gemini identical message IDs in independent sessions remain distinct
+  ---
+  duration_ms: 78.11265
+  type: 'test'
+  ...
+# Subtest: v1 Gemini migration makes backup, replays lost sessions, and remains idempotent
+ok 134 - v1 Gemini migration makes backup, replays lost sessions, and remains idempotent
+  ---
+  duration_ms: 84.085065
+  type: 'test'
+  ...
+# Subtest: Same-total streaming cache correction replaces old buckets
+ok 135 - Same-total streaming cache correction replaces old buckets
+  ---
+  duration_ms: 18.929013
+  type: 'test'
+  ...
+# Subtest: Partially known historical rates cannot be silently overwritten
+ok 136 - Partially known historical rates cannot be silently overwritten
+  ---
+  duration_ms: 24.62885
+  type: 'test'
+  ...
+# Subtest: Generic ingest is persistent, deduplicated and appears in latest status
+ok 137 - Generic ingest is persistent, deduplicated and appears in latest status
+  ---
+  duration_ms: 17.35483
+  type: 'test'
+  ...
+# Subtest: Generic JSONL root is opt-in and imports metadata-only usage
+ok 138 - Generic JSONL root is opt-in and imports metadata-only usage
+  ---
+  duration_ms: 12.683432
+  type: 'test'
+  ...
+# Subtest: Authenticated HTTP usage + catalog + unconfigured update routes
+ok 139 - Authenticated HTTP usage + catalog + unconfigured update routes
+  ---
+  duration_ms: 98.906741
+  type: 'test'
+  ...
+# Subtest: Gemini subagent files without session- prefix under chats/parent are collected
+ok 140 - Gemini subagent files without session- prefix under chats/parent are collected
+  ---
+  duration_ms: 16.13791
+  type: 'test'
+  ...
+# Subtest: Gemini checkpoint messages are read and remain deduplicated after replay
+ok 141 - Gemini checkpoint messages are read and remain deduplicated after replay
+  ---
+  duration_ms: 11.301077
+  type: 'test'
+  ...
+# Subtest: VS Code auto-install submits only the verified local VSIX to the built-in installer (mock)
+ok 142 - VS Code auto-install submits only the verified local VSIX to the built-in installer (mock)
+  ---
+  duration_ms: 194.276477
+  type: 'test'
+  ...
+# Subtest: VS Code adapter mock: activation, status, dashboard, filters and disposal
+ok 143 - VS Code adapter mock: activation, status, dashboard, filters and disposal
+  ---
+  duration_ms: 156.5317
+  type: 'test'
+  ...
+# Subtest: Input partitions and costs sum to IN exactly; neither cache nor thinking is charged twice
+ok 144 - Input partitions and costs sum to IN exactly; neither cache nor thinking is charged twice
+  ---
+  duration_ms: 5.222131
+  type: 'test'
+  ...
+# Subtest: Screenshot arithmetic fixture: 34 short requests reproduce 3,257,447 IN and $1.049042 exactly
+ok 145 - Screenshot arithmetic fixture: 34 short requests reproduce 3,257,447 IN and $1.049042 exactly
+  ---
+  duration_ms: 32.377228
+  type: 'test'
+  ...
+# Subtest: GPT-6 long context uses the request length, never cumulative period tokens
+ok 146 - GPT-6 long context uses the request length, never cumulative period tokens
+  ---
+  duration_ms: 8.333961
+  type: 'test'
+  ...
+# Subtest: Long context applies to cached input and cache writes too; output retains its own multiplier
+ok 147 - Long context applies to cached input and cache writes too; output retains its own multiplier
+  ---
+  duration_ms: 0.829261
+  type: 'test'
+  ...
+# Subtest: Missing request length is explicit reference pricing, not inferred from cumulative input
+ok 148 - Missing request length is explicit reference pricing, not inferred from cumulative input
+  ---
+  duration_ms: 0.947997
+  type: 'test'
+  ...
+# Subtest: Batch, Flex and Fast apply only when the billing mode is explicitly recorded
+ok 149 - Batch, Flex and Fast apply only when the billing mode is explicitly recorded
+  ---
+  duration_ms: 1.459426
+  type: 'test'
+  ...
+# Subtest: Explicit OpenAI usage partitions input without adding a cache-write surcharge to it
+ok 150 - Explicit OpenAI usage partitions input without adding a cache-write surcharge to it
+  ---
+  duration_ms: 1.39086
+  type: 'test'
+  ...
+# Subtest: Codex parser records the presence of cache counters; missing is different from explicit zero
+ok 151 - Codex parser records the presence of cache counters; missing is different from explicit zero
+  ---
+  duration_ms: 1.898356
+  type: 'test'
+  ...
+# Subtest: Cache writes are reported as observations when cumulative metadata disappears
+ok 152 - Cache writes are reported as observations when cumulative metadata disappears
+  ---
+  duration_ms: 0.816478
+  type: 'test'
+  ...
+# Subtest: Anthropic TTL rows price 5m and 1h independently; generic missing TTL is not given the cheap rate
+ok 153 - Anthropic TTL rows price 5m and 1h independently; generic missing TTL is not given the cheap rate
+  ---
+  duration_ms: 1.594222
+  type: 'test'
+  ...
+# Subtest: Google missing per-token cache-write tariff is not zero, and hourly storage is not repurposed
+ok 154 - Google missing per-token cache-write tariff is not zero, and hourly storage is not repurposed
+  ---
+  duration_ms: 0.972786
+  type: 'test'
+  ...
+# Subtest: Equal applied rates group together, while changed dates/long-context/tiers remain distinguishable
+ok 155 - Equal applied rates group together, while changed dates/long-context/tiers remain distinguishable
+  ---
+  duration_ms: 1.245741
+  type: 'test'
+  ...
+# Subtest: Missing price remains null, and an explicit custom zero rate is the only free rate
+ok 156 - Missing price remains null, and an explicit custom zero rate is the only free rate
+  ---
+  duration_ms: 1.858624
+  type: 'test'
+  ...
+# Subtest: Malformed input partition does not invalidate independent output cost
+ok 157 - Malformed input partition does not invalidate independent output cost
+  ---
+  duration_ms: 0.342934
+  type: 'test'
+  ...
+# Subtest: Historical short-context reference snapshot upgrades only for matching official model/rates
+ok 158 - Historical short-context reference snapshot upgrades only for matching official model/rates
+  ---
+  duration_ms: 0.524662
+  type: 'test'
+  ...
+# Subtest: History exports include actual per-million rates and independent cache costs
+ok 159 - History exports include actual per-million rates and independent cache costs
+  ---
+  duration_ms: 78.850301
+  type: 'test'
+  ...
+# Subtest: Input evidence and condition provenance survive journal/restart without duplicate revisions
+ok 160 - Input evidence and condition provenance survive journal/restart without duplicate revisions
+  ---
+  duration_ms: 54.117408
+  type: 'test'
+  ...
+# Subtest: Upgrade backs up old ledger and re-reads original cache counters
+ok 161 - Upgrade backs up old ledger and re-reads original cache counters
+  ---
+  duration_ms: 34.817058
+  type: 'test'
+  ...
+# Subtest: Metadata-only cache classification enrichment after a baseline is not new spending
+ok 162 - Metadata-only cache classification enrichment after a baseline is not new spending
+  ---
+  duration_ms: 26.270511
+  type: 'test'
+  ...
+# Subtest: Ended measurements keep their original costs and applied tariffs after a source price change
+ok 163 - Ended measurements keep their original costs and applied tariffs after a source price change
+  ---
+  duration_ms: 35.882918
+  type: 'test'
+  ...
+# Subtest: Empty aggregate has zero measured components but does not invent an applicable tariff
+ok 164 - Empty aggregate has zero measured components but does not invent an applicable tariff
+  ---
+  duration_ms: 1.099688
+  type: 'test'
+  ...
+# Subtest: A cumulative delta spanning more than the last request is not priced using that request length as certain
+ok 165 - A cumulative delta spanning more than the last request is not priced using that request length as certain
+  ---
+  duration_ms: 0.759564
+  type: 'test'
+  ...
+# Subtest: VS Code measurement commands start, show zero, pin, stop and unpin through actual local API (mock host)
+ok 166 - VS Code measurement commands start, show zero, pin, stop and unpin through actual local API (mock host)
+  ---
+  duration_ms: 218.202619
+  type: 'test'
+  ...
+# Subtest: Measurement endpoints require auth and same-origin for reads and writes
+ok 167 - Measurement endpoints require auth and same-origin for reads and writes
+  ---
+  duration_ms: 136.76959
+  type: 'test'
+  ...
+# Subtest: HTTP reset exposes zero measurement, leaves raw summary unchanged, supports pinned status and undo
+ok 168 - HTTP reset exposes zero measurement, leaves raw summary unchanged, supports pinned status and undo
+  ---
+  duration_ms: 117.314578
+  type: 'test'
+  ...
+# Subtest: HTTP measurement scope exports delta events not whole cumulative events
+ok 169 - HTTP measurement scope exports delta events not whole cumulative events
+  ---
+  duration_ms: 53.256912
+  type: 'test'
+  ...
+# Subtest: HTTP compare/export retains separate input/output/total values with safe CSV names
+ok 170 - HTTP compare/export retains separate input/output/total values with safe CSV names
+  ---
+  duration_ms: 30.87939
+  type: 'test'
+  ...
+# Subtest: HTTP invalid IDs and immutable filter edits fail without resetting other records
+ok 171 - HTTP invalid IDs and immutable filter edits fail without resetting other records
+  ---
+  duration_ms: 36.820157
+  type: 'test'
+  ...
+# Subtest: Static measurement script is served with CSP but contains no local access secret
+ok 172 - Static measurement script is served with CSP but contains no local access secret
+  ---
+  duration_ms: 23.969372
+  type: 'test'
+  ...
+# Subtest: End API is idempotent and only metadata can be edited afterward
+ok 173 - End API is idempotent and only metadata can be edited afterward
+  ---
+  duration_ms: 57.99809
+  type: 'test'
+  ...
+# Subtest: Meter filters are strict, route-specific and distinguish empty effort from wildcard
+ok 174 - Meter filters are strict, route-specific and distinguish empty effort from wildcard
+  ---
+  duration_ms: 1.892017
+  type: 'test'
+  ...
+# Subtest: Reset stores a baseline without deleting cumulative usage; explicit meter begins at zero
+ok 175 - Reset stores a baseline without deleting cumulative usage; explicit meter begins at zero
+  ---
+  duration_ms: 101.878644
+  type: 'test'
+  ...
+# Subtest: New requests carry separate input/output prices and exact total tokens
+ok 176 - New requests carry separate input/output prices and exact total tokens
+  ---
+  duration_ms: 26.241364
+  type: 'test'
+  ...
+# Subtest: Streaming request existing at the boundary contributes only subsequent deltas
+ok 177 - Streaming request existing at the boundary contributes only subsequent deltas
+  ---
+  duration_ms: 36.514744
+  type: 'test'
+  ...
+# Subtest: Late-discovered old requests are excluded, not charged to the new measurement
+ok 178 - Late-discovered old requests are excluded, not charged to the new measurement
+  ---
+  duration_ms: 23.243137
+  type: 'test'
+  ...
+# Subtest: New undated records are excluded explicitly rather than assigned file modification time
+ok 179 - New undated records are excluded explicitly rather than assigned file modification time
+  ---
+  duration_ms: 26.759113
+  type: 'test'
+  ...
+# Subtest: Repricing an existing request without new tokens never creates measured spend
+ok 180 - Repricing an existing request without new tokens never creates measured spend
+  ---
+  duration_ms: 30.698509
+  type: 'test'
+  ...
+# Subtest: Cache reclassification without new tokens is ignored
+ok 181 - Cache reclassification without new tokens is ignored
+  ---
+  duration_ms: 26.638942
+  type: 'test'
+  ...
+# Subtest: Ambiguous cache delta preserves input counts but makes input price unknown, output stays priced
+ok 182 - Ambiguous cache delta preserves input counts but makes input price unknown, output stays priced
+  ---
+  duration_ms: 15.104526
+  type: 'test'
+  ...
+# Subtest: Delta costs use full request context tier rather than the small delta context
+ok 183 - Delta costs use full request context tier rather than the small delta context
+  ---
+  duration_ms: 19.667363
+  type: 'test'
+  ...
+# Subtest: Unpriced models stay unpriced instead of becoming free
+ok 184 - Unpriced models stay unpriced instead of becoming free
+  ---
+  duration_ms: 13.036835
+  type: 'test'
+  ...
+# Subtest: End freezes counts, prices and groups; later collection cannot change result
+ok 185 - End freezes counts, prices and groups; later collection cannot change result
+  ---
+  duration_ms: 27.236382
+  type: 'test'
+  ...
+# Subtest: Exact model, effort, provider and role filters isolate parallel measurements
+ok 186 - Exact model, effort, provider and role filters isolate parallel measurements
+  ---
+  duration_ms: 27.648259
+  type: 'test'
+  ...
+# Subtest: Reset archives previous baseline; undo restores the previous active baseline with intervening deltas
+ok 187 - Reset archives previous baseline; undo restores the previous active baseline with intervening deltas
+  ---
+  duration_ms: 27.222638
+  type: 'test'
+  ...
+# Subtest: Undo initial reset leaves a cancelled result, never deletes raw events
+ok 188 - Undo initial reset leaves a cancelled result, never deletes raw events
+  ---
+  duration_ms: 14.751289
+  type: 'test'
+  ...
+# Subtest: Reset and named measurement baselines persist through restart
+ok 189 - Reset and named measurement baselines persist through restart
+  ---
+  duration_ms: 20.348886
+  type: 'test'
+  ...
+# Subtest: Repeated request key is idempotent even with concurrent requests
+ok 190 - Repeated request key is idempotent even with concurrent requests
+  ---
+  duration_ms: 10.741962
+  type: 'test'
+  ...
+# Subtest: Simultaneous reset writes are serialized and preserve all measurement history
+ok 191 - Simultaneous reset writes are serialized and preserve all measurement history
+  ---
+  duration_ms: 14.830028
+  type: 'test'
+  ...
+# Subtest: Failed persistence rolls in-memory mutations back and leaves original measurements file intact
+ok 192 - Failed persistence rolls in-memory mutations back and leaves original measurements file intact
+  ---
+  duration_ms: 10.039038
+  type: 'test'
+  ...
+# Subtest: Corrupt measurement data fails closed without overwriting file or ledger
+ok 193 - Corrupt measurement data fails closed without overwriting file or ledger
+  ---
+  duration_ms: 8.269403
+  type: 'test'
+  ...
+# Subtest: History edit, archive, restore and pin leave raw usage intact
+ok 194 - History edit, archive, restore and pin leave raw usage intact
+  ---
+  duration_ms: 38.825459
+  type: 'test'
+  ...
+# Subtest: Budget alerts use known amounts and do not stop a running measurement
+ok 195 - Budget alerts use known amounts and do not stop a running measurement
+  ---
+  duration_ms: 9.136214
+  type: 'test'
+  ...
+# Subtest: CSV/JSON exports include all six values, escape formulas, and omit baselines
+ok 196 - CSV/JSON exports include all six values, escape formulas, and omit baselines
+  ---
+  duration_ms: 26.9826
+  type: 'test'
+  ...
+# Subtest: Measurement API options reject invalid budgets, filters, edits and unknown IDs
+ok 197 - Measurement API options reject invalid budgets, filters, edits and unknown IDs
+  ---
+  duration_ms: 16.117418
+  type: 'test'
+  ...
+# Subtest: All baseline identities prevent retroactive model reattribution from becoming new usage
+ok 198 - All baseline identities prevent retroactive model reattribution from becoming new usage
+  ---
+  duration_ms: 17.597289
+  type: 'test'
+  ...
+# Subtest: Counter regression is flagged, not subtracted from measured total
+ok 199 - Counter regression is flagged, not subtracted from measured total
+  ---
+  duration_ms: 16.501083
+  type: 'test'
+  ...
+# Subtest: Active meter cap refuses excess work without erasing anything
+ok 200 - Active meter cap refuses excess work without erasing anything
+  ---
+  duration_ms: 46.256608
+  type: 'test'
+  ...
+# Subtest: Codex and Claude actual log parsers feed independent new measurements
+ok 201 - Codex and Claude actual log parsers feed independent new measurements
+  ---
+  duration_ms: 28.363719
+  type: 'test'
+  ...
+# (node:5309) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# (node:5309) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Antigravity actual SQLite synthetic data can be reset without altering source DB
+ok 202 - Antigravity actual SQLite synthetic data can be reset without altering source DB
+  ---
+  duration_ms: 92.927274
+  type: 'test'
+  ...
+# Subtest: Output-only streaming plus input-cache correction cannot introduce an input charge
+ok 203 - Output-only streaming plus input-cache correction cannot introduce an input charge
+  ---
+  duration_ms: 23.250819
+  type: 'test'
+  ...
+# (node:5320) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: OpenAI output already includes reasoning: 8441 = 15 + 8426, never add twice
+ok 204 - OpenAI output already includes reasoning: 8441 = 15 + 8426, never add twice
+  ---
+  duration_ms: 7.419645
+  type: 'test'
+  ...
+# Subtest: OpenAI Chat Completions reasoning detail is also a partition
+ok 205 - OpenAI Chat Completions reasoning detail is also a partition
+  ---
+  duration_ms: 0.417463
+  type: 'test'
+  ...
+# Subtest: Explicit zero thinking and missing thinking are different
+ok 206 - Explicit zero thinking and missing thinking are different
+  ---
+  duration_ms: 1.168029
+  type: 'test'
+  ...
+# Subtest: No output means both parts zero without fabricating positive usage
+ok 207 - No output means both parts zero without fabricating positive usage
+  ---
+  duration_ms: 0.535374
+  type: 'test'
+  ...
+# Subtest: Reasoning above total is a split mismatch, not extra output or input-price poison
+ok 208 - Reasoning above total is a split mismatch, not extra output or input-price poison
+  ---
+  duration_ms: 0.826328
+  type: 'test'
+  ...
+# Subtest: Gemini generateContent adds separate candidates and thoughts exactly once
+ok 209 - Gemini generateContent adds separate candidates and thoughts exactly once
+  ---
+  duration_ms: 0.347393
+  type: 'test'
+  ...
+# Subtest: Gemini Interactions has explicit distinct usage format and cache
+ok 210 - Gemini Interactions has explicit distinct usage format and cache
+  ---
+  duration_ms: 0.344959
+  type: 'test'
+  ...
+# Subtest: Interactions without thought count is rejected rather than silently assuming zero
+ok 211 - Interactions without thought count is rejected rather than silently assuming zero
+  ---
+  duration_ms: 0.552728
+  type: 'test'
+  ...
+# Subtest: Gemini missing thoughts with unaccounted total keeps partial output unpriced
+ok 212 - Gemini missing thoughts with unaccounted total keeps partial output unpriced
+  ---
+  duration_ms: 1.011728
+  type: 'test'
+  ...
+# Subtest: Gemini total matching candidates confirms total but not the absent split field
+ok 213 - Gemini total matching candidates confirms total but not the absent split field
+  ---
+  duration_ms: 0.868056
+  type: 'test'
+  ...
+# Subtest: Claude importer reads explicit thinking detail without changing total output
+ok 214 - Claude importer reads explicit thinking detail without changing total output
+  ---
+  duration_ms: 0.401022
+  type: 'test'
+  ...
+# Subtest: Claude local log reads optional explicit thinking_tokens; no text tokenization
+ok 215 - Claude local log reads optional explicit thinking_tokens; no text tokenization
+  ---
+  duration_ms: 1.683145
+  type: 'test'
+  ...
+# Subtest: Claude missing detail remains unavailable, not thinking zero
+ok 216 - Claude missing detail remains unavailable, not thinking zero
+  ---
+  duration_ms: 0.323742
+  type: 'test'
+  ...
+# Subtest: Present invalid optional thinking fields are rejected in API imports
+ok 217 - Present invalid optional thinking fields are rejected in API imports
+  ---
+  duration_ms: 0.788507
+  type: 'test'
+  ...
+# Subtest: Ollama does not derive a hidden thinking count from thinking text
+ok 218 - Ollama does not derive a hidden thinking count from thinking text
+  ---
+  duration_ms: 0.401499
+  type: 'test'
+  ...
+# Subtest: Codex cumulative snapshots partition their output DELTA, not lifetime reasoning twice
+ok 219 - Codex cumulative snapshots partition their output DELTA, not lifetime reasoning twice
+  ---
+  duration_ms: 1.609403
+  type: 'test'
+  ...
+# Subtest: Missing Codex optional reasoning does not reset input/output consumption
+ok 220 - Missing Codex optional reasoning does not reset input/output consumption
+  ---
+  duration_ms: 2.720384
+  type: 'test'
+  ...
+# Subtest: Legacy Gemini local fields are normalized with explicit thinking
+ok 221 - Legacy Gemini local fields are normalized with explicit thinking
+  ---
+  duration_ms: 0.661739
+  type: 'test'
+  ...
+# Subtest: Antigravity matched private split is reference only, not official certification
+ok 222 - Antigravity matched private split is reference only, not official certification
+  ---
+  duration_ms: 3.692265
+  type: 'test'
+  ...
+# Subtest: Antigravity F3-only output of 15 is not inflated using speculative thinking
+ok 223 - Antigravity F3-only output of 15 is not inflated using speculative thinking
+  ---
+  duration_ms: 0.639356
+  type: 'test'
+  ...
+# Subtest: Antigravity inconsistent components keep total unchanged and mark split unavailable
+ok 224 - Antigravity inconsistent components keep total unchanged and mark split unavailable
+  ---
+  duration_ms: 0.892591
+  type: 'test'
+  ...
+# Subtest: Antigravity total missing and only one detail never claims complete output
+ok 225 - Antigravity total missing and only one detail never claims complete output
+  ---
+  duration_ms: 0.152003
+  type: 'test'
+  ...
+# Subtest: Antigravity alternative observations with conflicting split are not silently accepted
+ok 226 - Antigravity alternative observations with conflicting split are not silently accepted
+  ---
+  duration_ms: 1.030685
+  type: 'test'
+  ...
+# Subtest: Full and partial aggregate partition known output without pretending unknowns are zero
+ok 227 - Full and partial aggregate partition known output without pretending unknowns are zero
+  ---
+  duration_ms: 2.849961
+  type: 'test'
+  ...
+# Subtest: Entirely known split aggregates exactly and costs conserve the priced total
+ok 228 - Entirely known split aggregates exactly and costs conserve the priced total
+  ---
+  duration_ms: 1.590829
+  type: 'test'
+  ...
+# Subtest: Long-context output pricing is reused when dividing thinking cost
+ok 229 - Long-context output pricing is reused when dividing thinking cost
+  ---
+  duration_ms: 0.649027
+  type: 'test'
+  ...
+# Subtest: Integer output partitions conserve counts and pico costs across 300 deterministic cases
+ok 230 - Integer output partitions conserve counts and pico costs across 300 deterministic cases
+  ---
+  duration_ms: 43.189327
+  type: 'test'
+  ...
+# Subtest: Legacy reasoning zero is unknown and migration never changes total tokens
+ok 231 - Legacy reasoning zero is unknown and migration never changes total tokens
+  ---
+  duration_ms: 0.724847
+  type: 'test'
+  ...
+# Subtest: Whitelisted usage logs keep numeric split evidence but not response/thinking bodies
+ok 232 - Whitelisted usage logs keep numeric split evidence but not response/thinking bodies
+  ---
+  duration_ms: 1.292168
+  type: 'test'
+  ...
+# Subtest: History filtering distinguishes reference, unavailable and mismatch partitions
+ok 233 - History filtering distinguishes reference, unavailable and mismatch partitions
+  ---
+  duration_ms: 63.479833
+  type: 'test'
+  ...
+# Subtest: Journal restart preserves thinking metadata and no-change re-scan creates no revisions
+ok 234 - Journal restart preserves thinking metadata and no-change re-scan creates no revisions
+  ---
+  duration_ms: 62.676662
+  type: 'test'
+  ...
+# Subtest: History and CSV export include parts and total without summing parts twice
+ok 235 - History and CSV export include parts and total without summing parts twice
+  ---
+  duration_ms: 20.680321
+  type: 'test'
+  ...
+# Subtest: Explicit-zero detail enrichment is persisted for an already counted request
+ok 236 - Explicit-zero detail enrichment is persisted for an already counted request
+  ---
+  duration_ms: 12.869032
+  type: 'test'
+  ...
+# Subtest: Measurements partition positive output deltas and freeze ended values
+ok 237 - Measurements partition positive output deltas and freeze ended values
+  ---
+  duration_ms: 35.693473
+  type: 'test'
+  ...
+# Subtest: Late split enrichment alone is metadata, not newly spent thinking
+ok 238 - Late split enrichment alone is metadata, not newly spent thinking
+  ---
+  duration_ms: 23.366173
+  type: 'test'
+  ...
+# Subtest: Upgrade backs up old ledger, replays retained raw logs and preserves old audit revisions
+ok 239 - Upgrade backs up old ledger, replays retained raw logs and preserves old audit revisions
+  ---
+  duration_ms: 32.265101
+  type: 'test'
+  ...
+# Subtest: Codex: input cache categories are disjoint; reasoning is an output subset
+ok 240 - Codex: input cache categories are disjoint; reasoning is an output subset
+  ---
+  duration_ms: 6.15692
+  type: 'test'
+  ...
+# Subtest: Codex: repeated cumulative snapshot produces no second delta
+ok 241 - Codex: repeated cumulative snapshot produces no second delta
+  ---
+  duration_ms: 0.525327
+  type: 'test'
+  ...
+# Subtest: Codex: model switch attributes only subsequent delta to new model
+ok 242 - Codex: model switch attributes only subsequent delta to new model
+  ---
+  duration_ms: 0.963676
+  type: 'test'
+  ...
+# Subtest: Codex: counter rollback is re-baselined, not a new bill
+ok 243 - Codex: counter rollback is re-baselined, not a new bill
+  ---
+  duration_ms: 0.44921
+  type: 'test'
+  ...
+# Subtest: Codex: inherited fork history is excluded before fork timestamp
+ok 244 - Codex: inherited fork history is excluded before fork timestamp
+  ---
+  duration_ms: 0.618323
+  type: 'test'
+  ...
+# Subtest: Codex: historical aggregate with missing prior turns is unassigned
+ok 245 - Codex: historical aggregate with missing prior turns is unassigned
+  ---
+  duration_ms: 0.484657
+  type: 'test'
+  ...
+# Subtest: Codex: cache greater than input is flagged
+ok 246 - Codex: cache greater than input is flagged
+  ---
+  duration_ms: 0.400084
+  type: 'test'
+  ...
+# Subtest: Codex: malformed usage increments a durable diagnostic
+ok 247 - Codex: malformed usage increments a durable diagnostic
+  ---
+  duration_ms: 0.441503
+  type: 'test'
+  ...
+# Subtest: Codex: parent metadata labels subagent
+ok 248 - Codex: parent metadata labels subagent
+  ---
+  duration_ms: 0.812635
+  type: 'test'
+  ...
+# Subtest: Claude: input total includes each cache category once
+ok 249 - Claude: input total includes each cache category once
+  ---
+  duration_ms: 6.206698
+  type: 'test'
+  ...
+# Subtest: Claude: cache TTL omission remains unknown, not assumed 5m
+ok 250 - Claude: cache TTL omission remains unknown, not assumed 5m
+  ---
+  duration_ms: 1.968784
+  type: 'test'
+  ...
+# Subtest: Claude: message ID provides fallback without requestId
+ok 251 - Claude: message ID provides fallback without requestId
+  ---
+  duration_ms: 0.278077
+  type: 'test'
+  ...
+# Subtest: Claude: missing identifiers are not invented and are counted
+ok 252 - Claude: missing identifiers are not invented and are counted
+  ---
+  duration_ms: 0.375258
+  type: 'test'
+  ...
+# Subtest: Claude: streaming placeholder is marked non-final
+ok 253 - Claude: streaming placeholder is marked non-final
+  ---
+  duration_ms: 0.220677
+  type: 'test'
+  ...
+# Subtest: Claude: subagent file and metadata are classified
+ok 254 - Claude: subagent file and metadata are classified
+  ---
+  duration_ms: 0.19663
+  type: 'test'
+  ...
+# Subtest: Gemini: reasoning is added once to billed output
+ok 255 - Gemini: reasoning is added once to billed output
+  ---
+  duration_ms: 0.471586
+  type: 'test'
+  ...
+# Subtest: Gemini: tool input added only when total confirms separate usage
+ok 256 - Gemini: tool input added only when total confirms separate usage
+  ---
+  duration_ms: 0.253305
+  type: 'test'
+  ...
+# Subtest: Gemini: ambiguous tool accounting is flagged for partial pricing
+ok 257 - Gemini: ambiguous tool accounting is flagged for partial pricing
+  ---
+  duration_ms: 0.484427
+  type: 'test'
+  ...
+# Subtest: Gemini: legacy snapshot metadata works
+ok 258 - Gemini: legacy snapshot metadata works
+  ---
+  duration_ms: 0.331363
+  type: 'test'
+  ...
+# Subtest: Gemini: JSONL metadata and updates work; rewind is not a refund
+ok 259 - Gemini: JSONL metadata and updates work; rewind is not a refund
+  ---
+  duration_ms: 0.213386
+  type: 'test'
+  ...
+# Subtest: Parser output and state contain no prompt or content body
+ok 260 - Parser output and state contain no prompt or content body
+  ---
+  duration_ms: 0.36964
+  type: 'test'
+  ...
+# Subtest: Missing time is not silently assigned to another request time
+ok 261 - Missing time is not silently assigned to another request time
+  ---
+  duration_ms: 0.632202
+  type: 'test'
+  ...
+# (node:5338) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: ID 1319 and placeholder m319 resolve to Gemini 3.8 Flash Medium with a source, not an anonymous official claim
+ok 262 - ID 1319 and placeholder m319 resolve to Gemini 3.8 Flash Medium with a source, not an anonymous official claim
+  ---
+  duration_ms: 2.252963
+  type: 'test'
+  ...
+# Subtest: Matching numeric and named observations of one invocation do not create false model conflict
+ok 263 - Matching numeric and named observations of one invocation do not create false model conflict
+  ---
+  duration_ms: 6.419478
+  type: 'test'
+  ...
+# Subtest: A real different-model conflict remains unpriced rather than silently assigning a cheap model
+ok 264 - A real different-model conflict remains unpriced rather than silently assigning a cheap model
+  ---
+  duration_ms: 1.43495
+  type: 'test'
+  ...
+# Subtest: Only whitelisted model_enum metadata is used; unknown payload metadata does not escape
+ok 265 - Only whitelisted model_enum metadata is used; unknown payload metadata does not escape
+  ---
+  duration_ms: 0.341429
+  type: 'test'
+  ...
+# Subtest: An explicit total is charged once and raw conflicting split is preserved as diagnostic only
+ok 266 - An explicit total is charged once and raw conflicting split is preserved as diagnostic only
+  ---
+  duration_ms: 2.298533
+  type: 'test'
+  ...
+# Subtest: Legacy output-only uncertainty never invalidates known input or includes disputed output as known cost
+ok 267 - Legacy output-only uncertainty never invalidates known input or includes disputed output as known cost
+  ---
+  duration_ms: 1.230709
+  type: 'test'
+  ...
+# Subtest: Unknown cache TTL excludes only that bucket and preserves independently priced output
+ok 268 - Unknown cache TTL excludes only that bucket and preserves independently priced output
+  ---
+  duration_ms: 3.576649
+  type: 'test'
+  ...
+# Subtest: Official checked rate outranks a remote community match while explicit custom prices remain explicit overrides
+ok 269 - Official checked rate outranks a remote community match while explicit custom prices remain explicit overrides
+  ---
+  duration_ms: 1.816603
+  type: 'test'
+  ...
+# Subtest: Unknown numeric model is not priced from nearby IDs or prior session model
+ok 270 - Unknown numeric model is not priced from nearby IDs or prior session model
+  ---
+  duration_ms: 1.290388
+  type: 'test'
+  ...
+# Subtest: Full official API cost details independently reproduce input + output = total
+ok 271 - Full official API cost details independently reproduce input + output = total
+  ---
+  duration_ms: 1.457461
+  type: 'test'
+  ...
+# (node:5338) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Journal appends once for an observation, once for a revision and not for repeated scans
+ok 272 - Journal appends once for an observation, once for a revision and not for repeated scans
+  ---
+  duration_ms: 151.916777
+  type: 'test'
+  ...
+# (node:5338) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Journal whitelists privacy fields, survives source deletion, and can rebuild a lost ledger latest view
+ok 273 - Journal whitelists privacy fields, survives source deletion, and can rebuild a lost ledger latest view
+  ---
+  duration_ms: 115.760941
+  type: 'test'
+  ...
+# (node:5338) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: A torn final journal append is backed up and the last complete record remains readable
+ok 274 - A torn final journal append is backed up and the last complete record remains readable
+  ---
+  duration_ms: 92.055128
+  type: 'test'
+  ...
+# (node:5338) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Complete corrupted journal lines are rejected instead of quietly erased
+ok 275 - Complete corrupted journal lines are rejected instead of quietly erased
+  ---
+  duration_ms: 103.528622
+  type: 'test'
+  ...
+# Subtest: Journal folder and file symlinks are refused
+ok 276 - Journal folder and file symlinks are refused
+  ---
+  duration_ms: 9.402093
+  type: 'test'
+  ...
+# (node:5338) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: A log write failure surfaces instead of reporting a successfully saved ledger
+ok 277 - A log write failure surfaces instead of reporting a successfully saved ledger
+  ---
+  duration_ms: 84.941774
+  type: 'test'
+  ...
+# (node:5338) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# (node:5338) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Upgrade preserves old bytes then reparses output/model conflicts into a new audited revision
+ok 278 - Upgrade preserves old bytes then reparses output/model conflicts into a new audited revision
+  ---
+  duration_ms: 184.466682
+  type: 'test'
+  ...
+# (node:5338) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Health is not published half-empty during a slow scan
+ok 279 - Health is not published half-empty during a slow scan
+  ---
+  duration_ms: 103.309885
+  type: 'test'
+  ...
+# Subtest: History pages traverse more than 100 retained requests without dropping or repeating IDs
+ok 280 - History pages traverse more than 100 retained requests without dropping or repeating IDs
+  ---
+  duration_ms: 112.080258
+  type: 'test'
+  ...
+# Subtest: History filters are independent of the dashboard range and reject mismatched cursor filters
+ok 281 - History filters are independent of the dashboard range and reject mismatched cursor filters
+  ---
+  duration_ms: 17.300638
+  type: 'test'
+  ...
+# Subtest: History keyset cursor does not repeat requests when newer observations arrive
+ok 282 - History keyset cursor does not repeat requests when newer observations arrive
+  ---
+  duration_ms: 14.623221
+  type: 'test'
+  ...
+# (node:5338) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Latest-only history exports include all matching requests, price reasons and no prompts
+ok 283 - Latest-only history exports include all matching requests, price reasons and no prompts
+  ---
+  duration_ms: 66.694533
+  type: 'test'
+  ...
+# Subtest: History endpoints require local auth and expose pricing evidence, storage and stable queries
+ok 284 - History endpoints require local auth and expose pricing evidence, storage and stable queries
+  ---
+  duration_ms: 93.199442
+  type: 'test'
+  ...
+# Subtest: Exact integer cost: GPT-6 Luna cache and output buckets
+ok 285 - Exact integer cost: GPT-6 Luna cache and output buckets
+  ---
+  duration_ms: 8.502672
+  type: 'test'
+  ...
+# Subtest: Exact integer cost: Claude cache TTL prices
+ok 286 - Exact integer cost: Claude cache TTL prices
+  ---
+  duration_ms: 1.105349
+  type: 'test'
+  ...
+# Subtest: Unknown model is not shown as free
+ok 287 - Unknown model is not shown as free
+  ---
+  duration_ms: 1.020172
+  type: 'test'
+  ...
+# Subtest: Unknown Claude cache TTL leaves output priced and total incomplete
+ok 288 - Unknown Claude cache TTL leaves output priced and total incomplete
+  ---
+  duration_ms: 0.519048
+  type: 'test'
+  ...
+# Subtest: Reasoning effort is metadata, not a price multiplier
+ok 289 - Reasoning effort is metadata, not a price multiplier
+  ---
+  duration_ms: 1.282539
+  type: 'test'
+  ...
+# Subtest: Fast mode applies only where a rate exists
+ok 290 - Fast mode applies only where a rate exists
+  ---
+  duration_ms: 1.306257
+  type: 'test'
+  ...
+# Subtest: Only exact models and date-version suffixes match
+ok 291 - Only exact models and date-version suffixes match
+  ---
+  duration_ms: 1.035594
+  type: 'test'
+  ...
+# Subtest: External provider does not silently inherit a first-party rate
+ok 292 - External provider does not silently inherit a first-party rate
+  ---
+  duration_ms: 2.035053
+  type: 'test'
+  ...
+# Subtest: Custom zero price is permitted but missing price is not zero
+ok 293 - Custom zero price is permitted but missing price is not zero
+  ---
+  duration_ms: 0.803554
+  type: 'test'
+  ...
+# Subtest: Custom effective date prevents applying future prices to older records
+ok 294 - Custom effective date prevents applying future prices to older records
+  ---
+  duration_ms: 0.756544
+  type: 'test'
+  ...
+# Subtest: Final streaming snapshot reevaluates long-context tier against frozen base rule
+ok 295 - Final streaming snapshot reevaluates long-context tier against frozen base rule
+  ---
+  duration_ms: 1.423699
+  type: 'test'
+  ...
+# Subtest: Stored rate is immutable when a price file changes
+ok 296 - Stored rate is immutable when a price file changes
+  ---
+  duration_ms: 1.123997
+  type: 'test'
+  ...
+# Subtest: Invalid custom rate schemas are rejected
+ok 297 - Invalid custom rate schemas are rejected
+  ---
+  duration_ms: 1.45394
+  type: 'test'
+  ...
+# Subtest: Contradictory totals cause incomplete pricing
+ok 298 - Contradictory totals cause incomplete pricing
+  ---
+  duration_ms: 0.439973
+  type: 'test'
+  ...
+# Subtest: Wrong-model frozen tariff is rejected, not relabeled to the detected model
+ok 299 - Wrong-model frozen tariff is rejected, not relabeled to the detected model
+  ---
+  duration_ms: 7.62086
+  type: 'test'
+  ...
+# Subtest: Saved tariff cannot cross billing provider even for the identical model name
+ok 300 - Saved tariff cannot cross billing provider even for the identical model name
+  ---
+  duration_ms: 1.515252
+  type: 'test'
+  ...
+# Subtest: Frozen Fast tariff is not silently reused as Standard
+ok 301 - Frozen Fast tariff is not silently reused as Standard
+  ---
+  duration_ms: 3.866693
+  type: 'test'
+  ...
+# Subtest: Frozen tariff validity dates are checked after a timestamp is corrected
+ok 302 - Frozen tariff validity dates are checked after a timestamp is corrected
+  ---
+  duration_ms: 1.201814
+  type: 'test'
+  ...
+# Subtest: Tool-scoped custom prices do not leak to another tool via a matching billing provider
+ok 303 - Tool-scoped custom prices do not leak to another tool via a matching billing provider
+  ---
+  duration_ms: 2.231544
+  type: 'test'
+  ...
+# Subtest: Explicit wildcard user tariff remains applicable across tools for its billing provider
+ok 304 - Explicit wildcard user tariff remains applicable across tools for its billing provider
+  ---
+  duration_ms: 0.91398
+  type: 'test'
+  ...
+# Subtest: Forged resolvedModel cannot conceal a different base tariff identity
+ok 305 - Forged resolvedModel cannot conceal a different base tariff identity
+  ---
+  duration_ms: 3.558961
+  type: 'test'
+  ...
+# Subtest: A saved local-free tariff is refused for an unconfirmed remote invocation
+ok 306 - A saved local-free tariff is refused for an unconfirmed remote invocation
+  ---
+  duration_ms: 0.671949
+  type: 'test'
+  ...
+# Subtest: Unrecognized models do not get the previously selected model tariff
+ok 307 - Unrecognized models do not get the previously selected model tariff
+  ---
+  duration_ms: 3.859958
+  type: 'test'
+  ...
+# Subtest: Valid historical same-model custom rate remains frozen when today catalog changes
+ok 308 - Valid historical same-model custom rate remains frozen when today catalog changes
+  ---
+  duration_ms: 1.13091
+  type: 'test'
+  ...
+# Subtest: Matched date alias exposes actual tariff model rather than overwriting it with request label
+ok 309 - Matched date alias exposes actual tariff model rather than overwriting it with request label
+  ---
+  duration_ms: 1.61542
+  type: 'test'
+  ...
+# Subtest: Collector upgrades inconsistent v3 tariffs with backup and revision, preserving usage totals
+ok 310 - Collector upgrades inconsistent v3 tariffs with backup and revision, preserving usage totals
+  ---
+  duration_ms: 76.637983
+  type: 'test'
+  ...
+# Subtest: Price detail and rate view identify the tariff rule, not only the copied display name
+ok 311 - Price detail and rate view identify the tariff rule, not only the copied display name
+  ---
+  duration_ms: 2.684026
+  type: 'test'
+  ...
+# Subtest: Rate view refuses to present inconsistent saved tariff as a verified model price
+ok 312 - Rate view refuses to present inconsistent saved tariff as a verified model price
+  ---
+  duration_ms: 2.844034
+  type: 'test'
+  ...
+# Subtest: Updated request context at equal token totals recalculates the appropriate context band
+ok 313 - Updated request context at equal token totals recalculates the appropriate context band
+  ---
+  duration_ms: 23.078899
+  type: 'test'
+  ...
+# Subtest: Read-only audit flags identity mismatch without modifying ledger or exposing bodies
+ok 314 - Read-only audit flags identity mismatch without modifying ledger or exposing bodies
+  ---
+  duration_ms: 20.083467
+  type: 'test'
+  ...
+# Subtest: Audit distinguishes explicit historical/custom prices from identity errors
+ok 315 - Audit distinguishes explicit historical/custom prices from identity errors
+  ---
+  duration_ms: 9.55668
+  type: 'test'
+  ...
+# Subtest: Authenticated audit API is read-only and rejects unauthenticated requests
+ok 316 - Authenticated audit API is read-only and rejects unauthenticated requests
+  ---
+  duration_ms: 80.375068
+  type: 'test'
+  ...
+# Subtest: A timestamp-only correction crosses an explicit price validity boundary
+ok 317 - A timestamp-only correction crosses an explicit price validity boundary
+  ---
+  duration_ms: 26.483732
+  type: 'test'
+  ...
+# Subtest: Audit evidence survives usage journal serialization and restart
+ok 318 - Audit evidence survives usage journal serialization and restart
+  ---
+  duration_ms: 34.118727
+  type: 'test'
+  ...
+# Subtest: HTTP status matches local ledger and is private and non-cacheable
+ok 319 - HTTP status matches local ledger and is private and non-cacheable
+  ---
+  duration_ms: 176.234166
+  type: 'test'
+  ...
+# Subtest: Unauthenticated and invalid bearer API reads are rejected
+ok 320 - Unauthenticated and invalid bearer API reads are rejected
+  ---
+  duration_ms: 35.688655
+  type: 'test'
+  ...
+# Subtest: Cross-origin local requests are rejected even with the bearer token
+ok 321 - Cross-origin local requests are rejected even with the bearer token
+  ---
+  duration_ms: 40.808376
+  type: 'test'
+  ...
+# Subtest: Host checks reject DNS-rebinding style requests
+ok 322 - Host checks reject DNS-rebinding style requests
+  ---
+  duration_ms: 36.16501
+  type: 'test'
+  ...
+# Subtest: Static shell contains no secret and rejects traversal or unsupported methods
+ok 323 - Static shell contains no secret and rejects traversal or unsupported methods
+  ---
+  duration_ms: 28.717984
+  type: 'test'
+  ...
+# Subtest: Settings validate values and refuse filesystem path changes through HTTP
+ok 324 - Settings validate values and refuse filesystem path changes through HTTP
+  ---
+  duration_ms: 44.577424
+  type: 'test'
+  ...
+# Subtest: Parallel price updates are serialized without losing either entry
+ok 325 - Parallel price updates are serialized without losing either entry
+  ---
+  duration_ms: 41.38404
+  type: 'test'
+  ...
+# Subtest: Task API supports one active interval and persists ending it
+ok 326 - Task API supports one active interval and persists ending it
+  ---
+  duration_ms: 27.475153
+  type: 'test'
+  ...
+# Subtest: Exports are authorized, scoped and do not include raw message bodies
+ok 327 - Exports are authorized, scoped and do not include raw message bodies
+  ---
+  duration_ms: 31.08136
+  type: 'test'
+  ...
+# Subtest: One collector per data directory; graceful close removes runtime and lock
+ok 328 - One collector per data directory; graceful close removes runtime and lock
+  ---
+  duration_ms: 23.364155
+  type: 'test'
+  ...
+# Subtest: Empty source is no records, not a verified zero bill
+ok 329 - Empty source is no records, not a verified zero bill
+  ---
+  duration_ms: 24.783079
+  type: 'test'
+  ...
+# Subtest: Config and CSV sanitization reject unsafe or ambiguous values
+ok 330 - Config and CSV sanitization reject unsafe or ambiguous values
+  ---
+  duration_ms: 0.680862
+  type: 'test'
+  ...
+# Subtest: Stable semantic versions compare numerically and reject malformed/prerelease identifiers
+ok 331 - Stable semantic versions compare numerically and reject malformed/prerelease identifiers
+  ---
+  duration_ms: 1.242043
+  type: 'test'
+  ...
+# Subtest: Valid Ed25519 manifest binds exact app, version, HTTPS host, hash and expiry
+ok 332 - Valid Ed25519 manifest binds exact app, version, HTTPS host, hash and expiry
+  ---
+  duration_ms: 10.143789
+  type: 'test'
+  ...
+# Subtest: Tampered manifest, wrong key and wrong algorithm are rejected
+ok 333 - Tampered manifest, wrong key and wrong algorithm are rejected
+  ---
+  duration_ms: 102.218692
+  type: 'test'
+  ...
+# Subtest: Expired, future, wrong app, downgrade and unapproved asset URLs fail
+ok 334 - Expired, future, wrong app, downgrade and unapproved asset URLs fail
+  ---
+  duration_ms: 2.73951
+  type: 'test'
+  ...
+# Subtest: VSIX manifest inspection rejects malformed ZIP, publisher/name/version and unsafe archive paths
+ok 335 - VSIX manifest inspection rejects malformed ZIP, publisher/name/version and unsafe archive paths
+  ---
+  duration_ms: 1.099808
+  type: 'test'
+  ...
+# Subtest: Signed update checks, downloads, stages and rechecks hash before install
+ok 336 - Signed update checks, downloads, stages and rechecks hash before install
+  ---
+  duration_ms: 57.393077
+  type: 'test'
+  ...
+# Subtest: Auto-download is explicit, and no code executes in the updater
+ok 337 - Auto-download is explicit, and no code executes in the updater
+  ---
+  duration_ms: 14.535887
+  type: 'test'
+  ...
+# Subtest: Network failure preserves prior release but exposes error; automatic check respects interval
+ok 338 - Network failure preserves prior release but exposes error; automatic check respects interval
+  ---
+  duration_ms: 11.30811
+  type: 'test'
+  ...
+# Subtest: Checksum/size mismatch never stages an executable
+ok 339 - Checksum/size mismatch never stages an executable
+  ---
+  duration_ms: 12.534394
+  type: 'test'
+  ...
+# Subtest: Unconfigured and disabled updater makes no network requests
+ok 340 - Unconfigured and disabled updater makes no network requests
+  ---
+  duration_ms: 15.111081
+  type: 'test'
+  ...
+# Subtest: A cached signed release is still verified after process restart
+ok 341 - A cached signed release is still verified after process restart
+  ---
+  duration_ms: 13.739954
+  type: 'test'
+  ...
+1..341
+# tests 341
+# suites 0
+# pass 341
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4602.025695

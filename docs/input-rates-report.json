@@ -1,0 +1,30 @@
+{
+  "checksPassed": 16,
+  "checks": [
+    "34 synthetic short-context Sol requests reproduce the screenshot arithmetic with full amount precision",
+    "Input, Cached input and Cache writes show separate exact counts and matching costs",
+    "IN conservation equation and actual cache-hit ratio explain the low blended cost",
+    "API rate table shows four Sol tariffs per explicitly labeled 1,000,000 tokens, even zero-use writes",
+    "Rate details disclose source/date and whole-request 272K context rule, not cumulative million-token totals",
+    "Optional 1,000-token price unit rescales only the tariff display, never measured spend",
+    "Input detail keeps distinct five-minute, one-hour and unsplit cache-write buckets",
+    "Each model row has its own tariff and calculation-details action",
+    "Recent rows and request proof expose the stored tariff and individual bucket calculations",
+    "Full filtered CSV exports all 34 rows with rates, unit basis and cache component costs",
+    "Mixed-model totals show multiple applicable rates rather than a misleading single model price",
+    "Claude write durations and their separate accounting remain available",
+    "Google unlisted cache-write tariff is explicitly unknown, never a zero/free hourly-storage substitute",
+    "Three input buckets and controls have no page-level horizontal overflow at five widths",
+    "Old frozen measurement without new metadata never retains the previous view tariff table",
+    "No JavaScript runtime errors in input/rate/history interactions"
+  ],
+  "javascriptErrors": [],
+  "transport": "about:blank real app files + authenticated local HTTP API bridge",
+  "syntheticData": "34 short requests recreate the arithmetic of the supplied screenshot; this is not the user original log or a billing reconciliation",
+  "limitations": [
+    "No real VSIX Extension Host installation",
+    "No real user Antigravity DB or provider billing account",
+    "No actual macOS/Windows or OS PiP validation",
+    "Offline bridge does not verify browser navigation/CSP"
+  ]
+}
