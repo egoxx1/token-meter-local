@@ -18,6 +18,12 @@ Codex · Claude Code · Antigravity의 로컬 기록을 수집합니다. 일반 
 
 ![합성 세션의 원본과 장부 대조 화면](docs/reconciliation.png)
 
+### Preview in English
+
+These screens use synthetic demo data, not personal usage or actual charges. Token Meter Local separates ordinary input, cache reads, cache writes, and output (including thinking), then shows estimated costs using saved API rates. The reconciliation screen compares a session's local source records with its ledger while preserving the reset boundary.
+
+Version 0.10.1 counts identical primary/retry observations once, keeps distinct calls separate, and reads supported SQLite metadata blobs up to 16 MiB. Install the VSIX in VS Code and reload the window. The estimates do not verify a provider invoice.
+
 ## 1. 설치와 업그레이드
 
 VS Code에는 **`token-meter-local-0.10.1.vsix` 하나만** 설치합니다.
