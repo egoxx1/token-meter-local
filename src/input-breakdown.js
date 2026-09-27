@@ -57,11 +57,23 @@ function rateView(e){
     thinking:'THINKING은 전체 출력 단가를 적용한 출력 비용의 분해값입니다. 추가 비용으로 다시 합산하지 않습니다.',
     cacheWriteNote:(r.modelProvider||e.modelProvider)==='google'?'Google 캐시 시간당 저장료는 이 토큰 계산에 포함하지 않습니다.':values.cacheWrite===null&&values.cacheWrite5m===null&&values.cacheWrite1h===null?'캐시 쓰기 단가 없음: 무료라는 뜻이 아닙니다.':'캐시 쓰기 토큰은 일반 입력과 중복 과금하지 않습니다.'};
 }
+// A rate group repeats across thousands of requests. Its identity is not the
+// request context length. Weak keys avoid retaining discarded event/price graphs.
+const groupCache=new WeakMap();
+function rateIdentity(e){
+  const rate=e.price?.rate;
+  if(!rate||!Object.isFrozen(rate)){const {contextInput,...view}=rateView(e);return {view,key:hash(JSON.stringify(view))};}
+  let cache=groupCache.get(rate);if(!cache){cache=new Map();groupCache.set(rate,cache);}
+  const base=rate.baseRule||rate,at=Date.parse(e.timestamp);
+  const dateMatches=(!base.effectiveFrom||(Number.isFinite(at)&&at>=Date.parse(base.effectiveFrom)))&&(!base.effectiveTo||(Number.isFinite(at)&&at<Date.parse(base.effectiveTo)));
+  const k=JSON.stringify([e.provider,e.modelProvider,e.model,e.serviceTier,e.local===true,dateMatches,e.price?.referenceReasons||[]]);
+  if(cache.has(k))return cache.get(k);
+  const {contextInput,...view}=rateView(e),result={view,key:hash(JSON.stringify(view))};
+  if(cache.size>=32)cache.delete(cache.keys().next().value);cache.set(k,result);return result;
+}
 function blankRates(){return new Map();}
 function addRate(map,e){
-  const view=rateView(e);
-  // Request length is not identity: equal applied prices can share a group.
-  const {contextInput,...identity}=view,key=hash(JSON.stringify(identity));
+  const {view:identity,key}=rateIdentity(e);
   if(!map.has(key))map.set(key,{...identity,id:key,records:0,firstTimestamp:null,lastTimestamp:null,input:blankInput(),outputTokens:0,knownOutputPico:0n,outputUnpricedRecords:0});
   const r=map.get(key);r.records++;addInput(r.input,e);r.outputTokens+=count(e.output);r.knownOutputPico+=BigInt(e.price?.knownOutputPico||'0');if(e.price?.outputPico==null)r.outputUnpricedRecords++;
   if(e.timestamp){if(!r.firstTimestamp||e.timestamp<r.firstTimestamp)r.firstTimestamp=e.timestamp;if(!r.lastTimestamp||e.timestamp>r.lastTimestamp)r.lastTimestamp=e.timestamp;}

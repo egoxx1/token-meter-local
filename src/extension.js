@@ -3,7 +3,7 @@ const vscode=require('vscode');
 const path=require('node:path');
 const os=require('node:os');
 const {spawn}=require('node:child_process');
-const {request,runtime,dashboardUrl}=require('./client');
+const {request,runtime,dashboardUrl,probe}=require('./client');
 const {statusLine,costText}=require('./summary');
 const {short,money}=require('./util');
 const {compareVersions}=require('./updates');
@@ -12,7 +12,7 @@ let timer,status,paused=false,launching=null;
 function settings(){return vscode.workspace.getConfiguration('tokenMeter');}
 function dir(){const configured=settings().get('dataDirectory','');return configured?path.resolve(configured):process.env.TOKEN_METER_HOME?path.resolve(process.env.TOKEN_METER_HOME):path.join(os.homedir(),'.token-meter');}
 async function ensureServer(context){
-  let running;try{running=await request(dir());}catch{}
+  let running;try{running=await probe(dir());}catch{}
   if(running){
     const comparison=compareVersions(running.version,VERSION);
     if(comparison===0)return;
@@ -24,7 +24,7 @@ async function ensureServer(context){
   launching=(async()=>{
     const child=spawn(process.execPath,[path.join(context.extensionPath,'bin','cli.js'),'serve','--data-dir',dir()],{env:{...process.env,ELECTRON_RUN_AS_NODE:'1'},stdio:'ignore',detached:true,windowsHide:true});
     let failure;child.on('error',e=>{failure=e;});child.unref();
-    for(let i=0;i<240;i++){if(failure)throw failure;await new Promise(r=>setTimeout(r,250));try{await request(dir());return;}catch{}}
+    for(let i=0;i<240;i++){if(failure)throw failure;await new Promise(r=>setTimeout(r,250));try{await request(dir(),'/api/ping');return;}catch{}}
     throw new Error('수집기 시작 실패. 패키지 폴더에서 node bin/cli.js serve를 실행해 오류를 확인하세요.');
   })().finally(()=>{launching=null;});return launching;
 }
@@ -47,17 +47,22 @@ async function activate(context){
       vscode.window.showInformationMessage(`Token Meter ${verified.version} 설치 요청 완료. 작업을 저장한 뒤 창을 다시 로드하세요.`);
     }finally{installing=false;}
   }
+  let polling=false;
   async function poll(){
+    if(polling)return;polling=true;try{return await pollOnce();}finally{polling=false;}
+  }
+  async function pollOnce(){
     if(!settings().get('enabled',true)){status.hide();return;}
     status.show();
     if(paused){status.text='TM 수집기 중지';return;}
     try{
-      const q=new URLSearchParams({scope:settings().get('scope','today'),provider:settings().get('provider','all'),followPinned:settings().get('followPinnedMeasurement',true)?'1':'0'});
+      const q=new URLSearchParams({view:'statusbar',scope:settings().get('scope','today'),provider:settings().get('provider','all'),followPinned:settings().get('followPinnedMeasurement',true)?'1':'0'});
       const d=await request(dir(),'/api/status?'+q);
       status.text=statusLine(d,{tokenDisplay:settings().get('tokenDisplay','compact')}).replace(/\$\(/g,'＄(');
       const tip=new vscode.MarkdownString();tip.isTrusted=false;
       tip.appendText(`모델: 최근 로그 관측값. 선택 직후에는 다음 기록까지 지연될 수 있습니다.
 최근 수집: ${d.updatedAt||'대기'}
+수집기 RAM: ${d.performance?Math.round(d.performance.rssBytes/1048576)+' MiB (Node 프로세스·worker 포함, 브라우저/VS Code/Python 제외)':'정보 없음'}
 집계 범위: ${d.scope} · ${d.provider}
 초기화 기준: ${d.scopeInfo?.epochStartedAt||'초기화 없음'}
 비교용 입력 전체: ${(d.summary.input||0).toLocaleString()} = 일반 + 캐시 읽기 + 쓰기

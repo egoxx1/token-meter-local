@@ -56,30 +56,30 @@ function filtered(c, query = {}, now = new Date()) {
   return {events,scope,sessionId};
 }
 function summarize(c, query={}, now=new Date()) {
-  const {events,scope,sessionId,measurement}=filtered(c,query,now), a=blank(); for(const e of events)add(a,e);
+  const lean=query.view==='statusbar';const {events,scope,sessionId,measurement}=filtered(c,query,now), a=blank(); for(const e of events)add(a,e);
   const all=[...c.events.values()];
   const sessions=new Map();
-  for(const e of require('./reliability').sourceEvents(c)) {
+  for(const e of lean?[]:require('./reliability').sourceEvents(c)) {
     if(!sessions.has(e.sessionId) || (e.timestamp||'')>sessions.get(e.sessionId).lastTime) sessions.set(e.sessionId,{id:e.sessionId,provider:e.provider,model:e.model,project:e.project,lastTime:e.timestamp||'',effort:e.effort});
   }
   const observed=Object.values(c.files).map(x=>x.state).filter(s=>s.model && (!measurement || (measurement.status==='running' && require('./measurements').matches({...s,modelProvider:s.modelProvider||require('./pricing').serviceOf(s)},measurement.filter))) && (!query.provider||query.provider==='all'||s.provider===query.provider) && (!query.project||s.projectId===query.project) && (scope!=='session'||`${s.provider}:${s.sessionId}`===sessionId)).sort((a,b)=>(b.lastTime||'').localeCompare(a.lastTime||''));
   let s=observed[0];
-  const last=events.filter(e=>e.timestamp).sort((a,b)=>b.timestamp.localeCompare(a.timestamp))[0];
+  let last;for(const e of events)if(e.timestamp&&(!last||e.timestamp>last.timestamp))last=e;
   if(last&&(!s||last.timestamp>(s.lastTime||'')))s={...last,sessionId:last.sessionId.slice(last.provider.length+1),lastTime:last.timestamp};
   const latest=s?{provider:s.provider,modelProvider:s.modelProvider,model:s.model,effort:s.effort,role:s.role,sessionId:`${s.provider}:${s.sessionId}`,timestamp:s.lastTime,contextWindow:s.contextWindow??null,lastContextTokens:s.lastContextTokens??null}:null;
-  const day=blank(); for(const e of all)if(e.timestamp&&dateKey(e.timestamp,c.config.timeZone)===dateKey(now,c.config.timeZone))add(day,e);
+  const day=blank(),todayKey=dateKey(now,c.config.timeZone);for(const e of all)if(e.timestamp&&dateKey(e.timestamp,c.config.timeZone)===todayKey)add(day,e);
   const dayFinished=finish(day);
   return {version:require('../package.json').version, generatedAt:now.toISOString(), updatedAt:c.updatedAt, scanning:c.scanning,
     scope,scopeInfo:require('./reliability').scopeInfo(c,query,events), selectionNotice:query.selectionNotice||null,dataState:require('./data-reset').dataState(c), measurement:measurement||null, selectedSession:sessionId, provider:measurement?(measurement.filter.provider||'all'):query.provider||'all', timeZone:c.config.timeZone,
     billingMode:c.config.billingMode, costLabel:events.some(e=>e.provider==='antigravity')?'API 환산':c.config.billingMode==='api-estimate'?'API 추정':'API 환산',
     summary:{...finish(a),...(measurement||(c.resetBoundary&&query.dataset!=='source')?{measured:true}:{})}, latest,
-    byProvider:grouped(events,e=>e.provider,e=>({provider:e.provider})),
-    byModel:grouped(events,e=>JSON.stringify([e.provider,require('./pricing').serviceOf(e),e.model,e.effort,e.role]),e=>({provider:e.provider,modelProvider:require('./pricing').serviceOf(e),model:e.model,effort:e.effort,role:e.role})),
-    byProject:grouped(events,e=>e.projectId,e=>({project:e.project})),
-    byRole:grouped(events,e=>e.role,e=>({role:e.role})),
+    byProvider:lean?[]:grouped(events,e=>e.provider,e=>({provider:e.provider})),
+    byModel:lean?[]:grouped(events,e=>JSON.stringify([e.provider,require('./pricing').serviceOf(e),e.model,e.effort,e.role]),e=>({provider:e.provider,modelProvider:require('./pricing').serviceOf(e),model:e.model,effort:e.effort,role:e.role})),
+    byProject:lean?[]:grouped(events,e=>e.projectId,e=>({project:e.project})),
+    byRole:lean?[]:grouped(events,e=>e.role,e=>({role:e.role})),
     sessions:[...sessions.values()].sort((a,b)=>b.lastTime.localeCompare(a.lastTime)).filter((s,i)=>i<500||s.id===sessionId),sessionListLimited:sessions.size>500,
-    projects:[...new Map(all.map(e=>[e.projectId,{id:e.projectId,name:e.project}])).values()],
-    recent:events.slice().sort((a,b)=>(b.timestamp||b.firstObservedAt||'').localeCompare(a.timestamp||a.firstObservedAt||'')).slice(0,100).map(require('./history').recordView),
+    projects:lean?[]:[...new Map(all.map(e=>[e.projectId,{id:e.projectId,name:e.project}])).values()],
+    recent:lean?[]:events.slice().sort((a,b)=>(b.timestamp||b.firstObservedAt||'').localeCompare(a.timestamp||a.firstObservedAt||'')).slice(0,100).map(require('./history').recordView),
     storage:c.journal?.status(),repairs:c.repairs,
     catalog:c.catalog?.status(c.config.catalogUpdates),
     tasks:c.tasks, health:c.health, warnings:c.warnings, scanStats:c.scanStats,
@@ -111,10 +111,21 @@ function statusLine(d, { tokenDisplay = 'compact' } = {}) {
   return `${prefix} | ${amounts.join(' | ')} | ${!s.records&&!s.measured?'사용 기록 없음':d.costLabel+' · IN 일반 / OUT 추론 포함'}`;
 
 }
-function exportCsv(c,q) {
+function* exportCsvChunks(c,q) {
   const fields=['timestamp','provider','modelProvider','model','effort','role','sessionId','project','input','normalInput','output','cacheRead','cacheWrite','cacheWrite5m','cacheWrite1h','cacheWriteUnknown','cacheReadKnown','cacheWriteKnown','normalInputUsd','cacheReadUsd','cacheWriteUsd','inputFieldMeaning','displayINField','cacheWrite5mUsd','cacheWrite1hUsd','cacheWriteUnknownUsd','priceUnitTokens','priceCurrency','rateInput','rateCachedInput','rateCacheWrite','rateCacheWrite5m','rateCacheWrite1h','rateOutput','reasoning','responseOutput','thinkingOutput','billableOutput','unclassifiedOutput','outputSplitStatus','responseUsd','thinkingUsd','total','inputUsd','outputUsd','totalUsd','knownTotalUsd','priceAsOf','priceSource','warnings'];
-  const rows=filtered(c,q).events.map(e=>({...e,...require('./history').recordView(e),inputUsd:e.price.inputPico===null?'':Number(e.price.inputPico)/1e12,outputUsd:e.price.outputPico===null?'':Number(e.price.outputPico)/1e12,totalUsd:e.price.totalPico===null?'':Number(e.price.totalPico)/1e12,knownTotalUsd:Number(e.price.knownPico)/1e12,priceAsOf:e.price.rate?.asOf,priceSource:e.price.rate?.source,warnings:[...e.warnings,...e.price.missing.map(m=>'unpriced:'+m)].join(';')}));
-  return '\uFEFF'+fields.join(',')+'\r\n'+rows.map(e=>fields.map(f=>csvCell(e[f])).join(',')).join('\r\n')+'\r\n';
+  const rows=filtered(c,q).events;
+  yield '\uFEFF'+fields.join(',')+'\r\n';
+  // Keep only one enriched request view in memory. Consumers control backpressure.
+  for(const source of rows){const e={...source,...require('./history').recordView(source),inputUsd:source.price.inputPico===null?'':Number(source.price.inputPico)/1e12,outputUsd:source.price.outputPico===null?'':Number(source.price.outputPico)/1e12,totalUsd:source.price.totalPico===null?'':Number(source.price.totalPico)/1e12,knownTotalUsd:Number(source.price.knownPico)/1e12,priceAsOf:source.price.rate?.asOf,priceSource:source.price.rate?.source,warnings:[...source.warnings,...source.price.missing.map(m=>'unpriced:'+m)].join(';')};yield fields.map(f=>csvCell(e[f])).join(',')+'\r\n';}
+  // Preserve the old export's empty-data trailing line.
+  if(!rows.length)yield '\r\n';
 }
+function exportCsv(c,q){return [...exportCsvChunks(c,q)].join('');}
+function* exportJsonChunks(c,q){
+  const rows=filtered(c,q).events;
+  yield '{"version":1,"costLabel":'+JSON.stringify(c.config.billingMode)+',"events":[';
+  let first=true;for(const e of rows){yield (first?'':',')+JSON.stringify(e);first=false;}yield ']}';
+}
+
 function aggregate(events){const a=blank();for(const e of events)add(a,e);return finish(a);}
-module.exports={aggregate,grouped,dateKey,filtered,summarize,statusLine,costText,exportCsv};
+module.exports={aggregate,grouped,dateKey,filtered,summarize,statusLine,costText,exportCsv,exportCsvChunks,exportJsonChunks};

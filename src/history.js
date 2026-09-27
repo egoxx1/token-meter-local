@@ -60,10 +60,13 @@ function history(c,q={}){
     nextCursor:hasMore?Buffer.from(JSON.stringify({v:1,filter:filterHash,key:key(slice.at(-1))})).toString('base64url'):null,
     storage:c.journal.status(),scope:'요청별 최신 관측값. 수정 이력 JSONL을 합산하지 않습니다.'};
 }
-function exportHistory(c,q={},format='jsonl'){
-  const rows=selection(c,q).sort((a,b)=>compare(key(a),key(b))).map(recordView);
-  if(format==='jsonl')return rows.map(e=>JSON.stringify({schema:'token-meter.usage.latest.v1',...e})+'\n').join('');
+function* historyChunks(c,q={},format='jsonl'){
+  const rows=selection(c,q).sort((a,b)=>compare(key(a),key(b)));
+  if(format==='jsonl'){for(const e of rows)yield JSON.stringify({schema:'token-meter.usage.latest.v1',...recordView(e)})+'\n';return;}
   const cols=['resetEpochId','resetDelta','sourceTimestamp','timestamp','firstObservedAt','provider','modelProvider','model','numericModelId','effort','sessionId','input','normalInput','cacheRead','cacheWrite','cacheWrite5m','cacheWrite1h','cacheWriteUnknown','cacheReadKnown','cacheWriteKnown','normalInputUsd','cacheReadUsd','cacheWriteUsd','inputFieldMeaning','displayINField','cacheWrite5mUsd','cacheWrite1hUsd','cacheWriteUnknownUsd','priceUnitTokens','priceCurrency','rateInput','rateCachedInput','rateCacheWrite','rateCacheWrite5m','rateCacheWrite1h','rateOutput','responseOutput','thinkingOutput','unclassifiedOutput','outputSplitStatus','outputTotalKnown','output','billableOutput','total','responseUsd','thinkingUsd','inputUsd','outputUsd','totalUsd','knownInputUsd','knownOutputUsd','knownTotalUsd','priceStatus','priceReasons','priceSource','priceAsOf'];
-  return '\uFEFF'+cols.join(',')+'\r\n'+rows.map(r=>{r.priceStatus=r.pricing.status;r.priceReasons=r.pricing.reasons.map(x=>x.message).join('; ');return cols.map(k=>csvCell(r[k])).join(',');}).join('\r\n')+'\r\n';
+  yield '\uFEFF'+cols.join(',')+'\r\n';
+  for(const e of rows){const r=recordView(e);r.priceStatus=r.pricing.status;r.priceReasons=r.pricing.reasons.map(x=>x.message).join('; ');yield cols.map(k=>csvCell(r[k])).join(',')+'\r\n';}
 }
-module.exports={recordView,history,selection,exportHistory};
+function exportHistory(c,q={},format='jsonl'){return [...historyChunks(c,q,format)].join('');}
+
+module.exports={recordView,history,selection,exportHistory,historyChunks};

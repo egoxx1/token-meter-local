@@ -96,7 +96,7 @@
       if(!$('price-detail-dialog').open)$('price-detail-dialog').showModal();
     }catch(e){flash(e.message,true);}
   }
-  async function exportRows(format){try{const response=await fetch('/api/history/export.'+format+'?'+new URLSearchParams(query),{headers:{Authorization:'Bearer '+key},signal:AbortSignal.timeout(60000)});if(!response.ok)throw new Error('기록 내보내기 실패');const blob=await response.blob(),url=URL.createObjectURL(blob),a=node('a');a.href=url;a.download='token-meter-usage-history.'+format;a.click();setTimeout(()=>URL.revokeObjectURL(url),3000);}catch(e){error(e.message);}}
+  async function exportRows(format){try{await saveExport('/api/history/export.'+format+'?'+new URLSearchParams(query),'token-meter-usage-history.'+format);}catch(e){error(e.message);}}
   $('history-form').addEventListener('submit',e=>{e.preventDefault();apply();});
   $('history-clear').addEventListener('click',()=>{$('history-form').reset();apply();});
   $('history-next').addEventListener('click',()=>{if(nextCursor){cursors=cursors.slice(0,pageIndex+1);cursors.push(nextCursor);pageIndex++;refresh(true);}});

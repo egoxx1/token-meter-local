@@ -1,8 +1,8 @@
 {
   "name": "token-meter-local",
   "displayName": "Token Meter Local",
-  "description": "호출 단위 수집·초기화 경계 복구·세션 대조와 네 항목 API 환산 명세",
-	"version": "0.10.1",
+  "description": "메모리 최적화: 스트리밍 장부·중복 메타데이터 공유·경량 상태바, 호출 수집 및 초기화 경계 보존",
+  "version": "0.10.2",
   "publisher": "local-token-meter",
   "license": "MIT",
   "engines": {

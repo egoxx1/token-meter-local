@@ -104,7 +104,7 @@ function checkedState(s) {
 }
 class Measurements {
   constructor(c, {clock=nowISO,write=atomicJson}={}) {
-    this.c=c; this.clock=clock;this.write=write;this.queue=Promise.resolve();
+    this.c=c;this.revision=0;this.viewCache=new WeakMap(); this.clock=clock;this.write=write;this.queue=Promise.resolve();
     this.file=path.join(c.storageDir||c.dataDir,'measurements.json');this.backup=path.join(c.storageDir||c.dataDir,'measurements.backup.json');
     this.state={version:1,runs:[],pinnedId:null,undo:null};
   }
@@ -113,7 +113,7 @@ class Measurements {
   async mutate(fn) {
     const job=this.queue.catch(()=>{}).then(async()=>{
       const before=structuredClone(this.state);
-      try { const result=await fn(); await this.write(this.backup,before);await this.write(this.file,this.state);return result; }
+      try { const result=await fn(); await this.write(this.backup,before);await this.write(this.file,this.state);this.revision++;this.viewCache=new WeakMap();return result; }
       catch(e){this.state=before;throw e;}
     });this.queue=job;return job;
   }
@@ -147,18 +147,25 @@ class Measurements {
     r.result=structuredClone(this.calculate(r));r.end=this.clock();r.status=status;delete r.baseline;
   }
   view(r,now=this.clock()) {
-    const result=this.calculate(r),a=require('./summary').aggregate(result.events);
+    const version=r.status==='running'?JSON.stringify([this.c.dataVersion,this.c.warnings]):r.result;
+    let cached=this.viewCache.get(r);
+    if(!cached||cached.version!==version){
+      const result=this.calculate(r),a=require('./summary').aggregate(result.events);
+      const legacyFrozen=r.status!=='running'&&result.events.some(require('./identity-repair').isLegacy);
+      const sourceWarnings=[...(result.sourceWarnings||[]),...(legacyFrozen?['구버전 Antigravity 병합 결과가 포함된 고정 측정입니다. 값은 보관했지만 정확한 토큰 총량으로 사용하지 마세요. 최신 원본 세션 대조를 확인하세요.']:[])];
+      const groups=require('./summary').grouped(result.events,e=>JSON.stringify(FILTER_KEYS.map(k=>k==='modelProvider'?serviceOf(e):e[k]??'')),e=>Object.fromEntries(FILTER_KEYS.map(k=>[k,k==='modelProvider'?serviceOf(e):e[k]??''])));
+      cached={version,a,detail:result.detail,legacyFrozen,sourceWarnings,groups};this.viewCache.set(r,cached);
+    }
+    const {a,detail,legacyFrozen,sourceWarnings,groups}=cached;
     const elapsedMs=Math.max(0,Date.parse(r.end||now)-Date.parse(r.start));
-    const legacyFrozen=r.status!=='running'&&result.events.some(require('./identity-repair').isLegacy);
-    const sourceWarnings=[...(result.sourceWarnings||[]),...(legacyFrozen?['구버전 Antigravity 병합 결과가 포함된 고정 측정입니다. 값은 보관했지만 정확한 토큰 총량으로 사용하지 마세요. 최신 원본 세션 대조를 확인하세요.']:[])];
     return {id:r.id,name:r.name,kind:r.kind,filter:r.filter,label:label(r.filter),start:r.start,end:r.end,status:r.status,
       archived:!!r.archived,notes:r.notes,outcome:r.outcome,budgetUsd:r.budgetUsd,
       pinned:this.state.pinnedId===r.id,summary:{...a,measured:true},elapsedMs,
       tokensPerMinute:elapsedMs>=1000?a.total/(elapsedMs/60000):null,
       knownUsdPerHour:elapsedMs>=1000?a.knownTotalUsd/(elapsedMs/3600000):null,
       budgetExceeded:r.budgetUsd!=null&&a.knownTotalUsd>=r.budgetUsd,
-      detail:{...result.detail,legacyFrozen},sourceWarnings,
-      groups:require('./summary').grouped(result.events,e=>JSON.stringify(FILTER_KEYS.map(k=>k==='modelProvider'?serviceOf(e):e[k]??'')),e=>Object.fromEntries(FILTER_KEYS.map(k=>[k,k==='modelProvider'?serviceOf(e):e[k]??''])))};
+      detail:{...detail,legacyFrozen},sourceWarnings,
+      groups};
   }
   list(){return {version:1,pinnedId:this.state.pinnedId,canUndo:!!this.state.undo,limits:LIMITS,runs:this.state.runs.slice().reverse().map(r=>this.view(r))};}
   async start(raw={},reset=false) {

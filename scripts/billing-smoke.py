@@ -46,10 +46,10 @@ with sync_playwright() as pw:
     old=call('/api/status?scope=all')['summary'];assert old['total']>0
     assert page.locator('#billing-rows tr').count()==4
     passed('Existing mixed CLI / Antigravity demo renders four billing items without changing ledger totals')
-    assert '0.10.1' in page.locator('#app-version').inner_text()
+    assert '0.10.2' in page.locator('#app-version').inner_text()
     assert page.locator('#billing-advanced').get_attribute('open') is None
     assert not page.locator('#thinking-tokens').is_visible()
-    passed('Default overview hides THINKING and TTL details; version is 0.10.1')
+    passed('Default overview hides THINKING and TTL details; version is 0.10.2')
     assert '단가' in page.locator('#billing-rows').inner_text();assert old['total']==call('/api/status?scope=all')['summary']['total']
     passed('Rendering mixed tariffs is read-only and retains saved component costs')
     reset();refresh();page.wait_for_function("document.querySelector('#total-tokens').textContent==='0'")
@@ -191,6 +191,6 @@ with sync_playwright() as pw:
     passed('Provider filter with no active records does not show the previous provider tariff')
     assert not errors,errors;passed('No uncaught JavaScript errors during billing, filters, history, settings, measurement and deletion flows')
     browser.close()
-report={'version':'0.10.1','passed':len(checks),'checks':checks,'errors':errors,'syntheticData':True,'mode':'about:blank-app-and-real-loopback-api' if a.offline else 'browser-navigation','limitations':['No real VS Code installation','No original user logs or billing account','No OS-level PiP test','Offline mode does not test navigation/CSP']}
+report={'version':'0.10.2','passed':len(checks),'checks':checks,'errors':errors,'syntheticData':True,'mode':'about:blank-app-and-real-loopback-api' if a.offline else 'browser-navigation','limitations':['No real VS Code installation','No original user logs or billing account','No OS-level PiP test','Offline mode does not test navigation/CSP']}
 (out/'billing-ui-report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2))
 print(json.dumps({'passed':len(checks),'errors':errors}))

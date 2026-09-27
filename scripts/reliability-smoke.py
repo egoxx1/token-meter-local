@@ -1,4 +1,4 @@
-"""0.10.1 UI acceptance against a separate synthetic reliability-demo collector.
+"""0.10.2 UI acceptance against a separate synthetic reliability-demo collector.
 The optional --offline bridge tests actual app code/local HTTP, NOT navigation/CSP/PiP.
 Never points at actual user data. Start scripts/reliability-demo.js first.
 """
@@ -32,7 +32,7 @@ with sync_playwright() as pw:
   for f in ['src/billing-view.js','web/app.js','web/measurements.js','web/history.js','web/rates.js','web/data-controls.js','web/reliability.js']:page.add_script_tag(content=(root/f).read_text())
  else:page.goto(r['origin']+'/#key='+r['token'])
  page.wait_for_function("document.querySelector('#verify-session').options.length>=3")
- assert '0.10.1' in page.locator('#app-version').inner_text();assert not page.locator('#version-warning').is_visible()
+ assert '0.10.2' in page.locator('#app-version').inner_text();assert not page.locator('#version-warning').is_visible()
  passed('Static UI version agrees with running collector without a stale hard-coded warning')
  scope=page.locator('#scope-explanation').inner_text();assert '전체 초기화 기준' in scope and '입력 전체' in scope and 'Codex' in scope and 'Antigravity' in scope
  passed('Mixed active view exposes epoch time, included providers and inclusive input definition')

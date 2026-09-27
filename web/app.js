@@ -127,7 +127,9 @@ function renderOutputSplit(d){
   if(s.outputTotalUnknownRecords)message+=' 전체 출력 자체가 불명확한 '+int(s.outputTotalUnknownRecords)+'건이 있어 총 토큰도 관측분입니다.';
   set('output-accounting-note',message);
 }
-function render(d){if(d.selectionNotice){scope=d.scope;flash(d.selectionNotice);}if(window.TMDataControls?.onStatus(d)===false)return;lastData=d;connected=true;document.body.classList.remove('offline');$('connection').textContent='로컬 수집 중';$('connection').className='badge';$('connection').title='';$('demo-badge').hidden=!d.demo;
+function render(d){
+  if(d.performance){let el=$('runtime-resources');if(!el){el=node('p','muted small');el.id='runtime-resources';$('reliability-panel').append(el);}const p=d.performance;el.textContent=`수집기 RAM ${(p.rssBytes/1048576).toFixed(1)} MiB · 활성 ${int(p.eventCount)}건 · 원본 ${int(p.sourceEventCount)}건 · 저장 대기 ${p.pendingSaves} · 백그라운드 탭 자동 조회 절약`;el.title='RSS는 수집기 프로세스의 실제 메모리이며 VS Code·브라우저 메모리는 별도입니다. SQLite worker를 포함하며 Python fallback 자식은 별도입니다.';}
+if(d.selectionNotice){scope=d.scope;flash(d.selectionNotice);}if(window.TMDataControls?.onStatus(d)===false)return;lastData=d;connected=true;document.body.classList.remove('offline');$('connection').textContent='로컬 수집 중';$('connection').className='badge';$('connection').title='';$('demo-badge').hidden=!d.demo;
   const attention=Object.values(d.health||{}).some(h=>h.errors||h.partial)||d.scopeInfo?.legacyAntigravityRecords;
   if(attention){$('connection').textContent='수집 점검 필요';$('connection').className='badge warning';$('connection').title=Object.entries(d.health||{}).filter(([,h])=>h.errors||h.partial).map(([p,h])=>p+': '+(p==='antigravity'?antigravityState(d):'읽기 오류 '+int(h.errors||0)+'건')).concat(d.scopeInfo?.legacyAntigravityRecords?['Antigravity 구버전 기록 '+int(d.scopeInfo.legacyAntigravityRecords)+'건']:[]).join(' · ');}
   else if(d.scanning)$('connection').textContent='수집 중 · 갱신 대기';
@@ -167,8 +169,43 @@ function renderPip() {
   }
   append(root,grid,node('div','pip-time',d.costLabel+' · OUT에 추론 포함 · 단가 / '+(window.TMRates?.unitName()||'100만 토큰')+' · '+((s.records||s.measured)?'마지막 확인 '+clock(d.updatedAt):'관측 기록 없음')));
 }
-async function load(){const seq=++requestSeq;try{const data=await api('/api/status?'+q());if(seq===requestSeq)render(data);}catch(e){if(seq!==requestSeq)return;connected=false;document.body.classList.add('offline');set('connection','연결 끊김');$('connection').className='badge warning';set('bar-time','연결 끊김 · 마지막 값');if(!lastData)flash(e.message,true);renderPip();}}
-async function download(format){try{const response=await fetch('/api/export.'+format+'?'+q(),{headers:{Authorization:'Bearer '+key},signal:AbortSignal.timeout(15000)});if(!response.ok)throw new Error('내보내기 실패');const blob=await response.blob();const url=URL.createObjectURL(blob);const a=node('a');a.href=url;a.download='token-meter-'+scope+'.'+format;a.click();setTimeout(()=>URL.revokeObjectURL(url),3000);}catch(e){flash(e.message,true);}}
+let loadPromise=null,needsReload=false;
+async function load(options={}){
+  if(loadPromise){if(!options?.auto)needsReload=true;return loadPromise;}
+  loadPromise=(async()=>{do{
+    needsReload=false;const seq=++requestSeq,query=q();
+    try{const data=await api('/api/status?'+query);if(seq===requestSeq&&query===q())render(data);else needsReload=true;}
+    catch(e){if(seq!==requestSeq)continue;connected=false;document.body.classList.add('offline');set('connection','연결 끊김');$('connection').className='badge warning';set('bar-time','연결 끊김 · 마지막 값');if(!lastData)flash(e.message,true);renderPip();}
+  }while(needsReload);})().finally(()=>{loadPromise=null;});return loadPromise;
+}
+
+let exportBusy=false;
+async function saveExport(endpoint,filename){
+  if(exportBusy)throw new Error('다른 내보내기가 진행 중입니다. 완료 후 다시 시도하세요.');
+  exportBusy=true;
+  try{
+    // Request permission in the original click gesture, before network work.
+    let handle=null;
+    if(window.isSecureContext&&typeof window.showSaveFilePicker==='function'){
+      try{handle=await window.showSaveFilePicker({suggestedName:filename});}
+      catch(e){if(e.name==='AbortError')return false;throw e;}
+    }
+    const response=await fetch(endpoint,{headers:{Authorization:'Bearer '+key},signal:AbortSignal.timeout(120000)});
+    if(!response.ok)throw new Error('내보내기 실패: HTTP '+response.status);
+    if(handle){
+      const writable=await handle.createWritable();
+      try{await response.body.pipeTo(writable);}catch(e){try{await writable.abort();}catch{}throw e;}
+    }else{
+      // Compatibility path: unlike direct streaming, Blob may require memory
+      // proportional to the export in this browser. Never pretend it is bounded.
+      const blob=await response.blob(),url=URL.createObjectURL(blob),a=node('a');
+      a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),3000);
+    }
+    return true;
+  }finally{exportBusy=false;}
+}
+async function download(format){try{await saveExport('/api/export.'+format+'?'+q(),'token-meter-'+scope+'.'+format);}catch(e){flash(e.message,true);}}
+
 for(const b of document.querySelectorAll('[data-scope]'))b.addEventListener('click',()=>{scope=b.dataset.scope;load();});
 for(const id of ['provider','project','session','dataset-select','task-select','measurement-select'])$(id).addEventListener('change',load);
 $('pin-button').addEventListener('click',async()=>{if(!('documentPictureInPicture'in window)){flash('이 브라우저는 항상 위 미니바를 지원하지 않습니다. 지원되는 데스크톱 Chrome에서 열거나 VS Code 상태바를 사용하세요.');return;}try{pipWindow=await documentPictureInPicture.requestWindow({width:940,height:300});const link=pipWindow.document.createElement('link');link.rel='stylesheet';link.href=location.origin+'/style.css';pipWindow.document.head.append(link);pipWindow.document.title='Token Meter';renderPip();}catch(e){flash('미니바를 열지 못했습니다: '+e.message,true);}});
@@ -206,4 +243,8 @@ $('catalog-button').addEventListener('click',async()=>{try{const p=await api('/a
 $('refresh-prices').addEventListener('click',async()=>{const b=$('refresh-prices');b.disabled=true;b.textContent='가격표 확인 중';try{const c=await api('/api/catalog/refresh',{});flash(c.sources.some(s=>s.error)?'일부 갱신 실패. 직전 정상 가격표를 유지합니다. 출처별 오류를 확인하세요.':'가격표 갱신 완료. 기존에 저장된 단가는 유지됩니다.');await load();}catch(e){flash(e.message,true);}finally{b.disabled=false;b.textContent='가격표 지금 갱신';}});
 $('check-updates').addEventListener('click',async()=>{const b=$('check-updates');b.disabled=true;try{const u=await api('/api/updates/check',{});if(u.error)throw new Error(u.error);flash(u.available?'새 버전 '+u.available+' 확인. VS Code에서 Token Meter: Install Verified Update 명령을 사용하세요.':'사용 가능한 새 버전이 없습니다.');await load();}catch(e){flash(e.message,true);}finally{b.disabled=false;}});
 if(!key)flash('로컬 접근키가 없습니다. 실행 시 출력된 대시보드 주소 또는 VS Code 상태바를 통해 다시 여세요.',true);
-setTimeout(load,0);setInterval(load,5000);
+let refreshTimer;
+async function refreshLoop(){try{if(!document.hidden||(pipWindow&&!pipWindow.closed))await load({auto:true});}finally{refreshTimer=setTimeout(refreshLoop,document.hidden&&(!pipWindow||pipWindow.closed)?30000:5000);}}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)load({auto:true});});
+window.addEventListener('pagehide',()=>clearTimeout(refreshTimer));
+setTimeout(()=>{load().finally(()=>{refreshTimer=setTimeout(refreshLoop,5000);});},0);

@@ -92,18 +92,18 @@ async function resetAll(c, raw, {write=durableJson, clock=()=>new Date().toISOSt
     const directory=path.join(root,id); await fs.mkdir(directory,{mode:0o700});
     const boundary={version:1,id,requestKey:raw.requestKey,startedAt,previousDirectory:c.storageDir||c.dataDir,
       baseline:[...source].map(([key,e])=>[key,require('./measurements').buckets(e)])};
-    const sources=[...source.values()].map(safeEvent);
+    const sources=[...source.values()].map(e=>c.metadataPool.event(safeEvent(e)));
     const ledger={version:2,repairs:structuredClone(c.repairs),events:[],files:structuredClone(c.files),tasks:[],journalSequence:0,
       resetBoundary:boundary,sourceEvents:sources};
     const state={version:1,runs:[],pinnedId:null,undo:null};
-    const journal=await new UsageLog(directory).init();
-    await write(path.join(directory,'ledger.json'),ledger);
+    const journal=await new UsageLog(directory,{compact:true}).init();
+    await (write===durableJson?require('./json-store').atomicLedger:write)(path.join(directory,'ledger.json'),ledger);
     await write(path.join(directory,'measurements.json'),state);
     await write(path.join(directory,'epoch.json'),{version:1,id,startedAt,committed:false,previousDirectory:boundary.previousDirectory});
     const pointer={version:1,id,startedAt,requestKey:raw.requestKey,minimumAppVersion:'0.8.0'};
     // Commit point. Preparation failures leave the old dataset active.
     await write(path.join(c.dataDir,'active-data.json'),pointer);
-    c.storageDir=directory;c.resetBoundary=boundary;c.resetBaseline=new Map(boundary.baseline);
+    c.dataVersion++;c.storageDir=directory;c.resetBoundary=boundary;c.resetBaseline=new Map(boundary.baseline);
     c.sourceEvents=new Map(sources.map(e=>[e.id,e]));c.events=new Map();c.tasks=[];c.journal=journal;
     c.antigravityAliases=new Map();for(const e of sources)if(e.provider==='antigravity')for(const key of e.identityKeys||[])c.antigravityAliases.set(key,e.id);
     c.files=ledger.files;c.updatedAt=startedAt;c.dirty=false;

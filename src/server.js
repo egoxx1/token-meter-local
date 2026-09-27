@@ -24,6 +24,17 @@ async function startServer({dataDir,port=0,onError=()=>{},catalogDownload,update
   const updates=await new (require('./updates').Updates)(dataDir,updateTransport).init();
   const token=crypto.randomBytes(32).toString('hex');
   let origin='',runtime,timer,updateTimer,updateJob,closing=false,server;
+  const viewCache=new (require('./view-cache').ViewCache)();
+  let lastViewRevision='';
+  const memoryStatus=()=>({pid:process.pid,node:process.version,rssBytes:process.memoryUsage().rss,heapUsedBytes:process.memoryUsage().heapUsed,externalBytes:process.memoryUsage().external,eventCount:collector.events.size,sourceEventCount:(collector.sourceEvents||collector.events).size,separateSourceMapCount:collector.sourceEvents?.size||0,journalIndex:collector.journal.latest.size,metadataPool:collector.metadataPool.stats(),viewCache:viewCache.stats(),pendingSaves:collector.pendingSaves,scanning:collector.scanning});
+  function cachedSummary(q){
+    const now=new Date(),revision=JSON.stringify([collector.dataVersion,collector.measurements.revision,collector.measurements.state.pinnedId,collector.resetBoundary?.id,collector.events.size,collector.config]);
+    if(lastViewRevision!==revision){viewCache.clear();lastViewRevision=revision;}
+    const stamp=Math.floor(now.getTime()/(q.scope==='measurement'?1000:60000));
+    const k=JSON.stringify([Object.entries(q).sort(([a],[b])=>a.localeCompare(b)),stamp]);
+    const d=viewCache.get(k,()=>summarize(collector,q,now));
+    return {...d,generatedAt:now.toISOString(),updatedAt:collector.updatedAt,scanning:collector.scanning,health:collector.health,warnings:collector.warnings,scanStats:collector.scanStats,storage:collector.journal.status(),antigravity:{...d.antigravity,health:collector.health.antigravity||{}},catalog:collector.catalog.status(collector.config.catalogUpdates),performance:memoryStatus()};
+  }
   let writeQueue=Promise.resolve();
   const serializeWrite=fn=>{const job=writeQueue.catch(()=>{}).then(fn);writeQueue=job;return job;};
   const respond=(res,code,data,type='application/json; charset=utf-8')=>{res.writeHead(code,{'Content-Type':type});res.end(typeof data==='string'?data:JSON.stringify(data));};
@@ -59,6 +70,8 @@ async function startServer({dataDir,port=0,onError=()=>{},catalogDownload,update
       if(collector.resetting)return respond(res,503,{error:'전체 초기화 처리 중입니다. 잠시 후 다시 확인하세요.'});
       const q=Object.fromEntries(url.searchParams);
       if(q.followPinned==='1'&&collector.measurements.state.pinnedId){q.scope='measurement';q.measurement=collector.measurements.state.pinnedId;}
+      if(req.method==='GET'&&url.pathname==='/api/ping')return respond(res,200,{version:require('../package.json').version,scanning:collector.scanning,pid:process.pid});
+      if(req.method==='GET'&&url.pathname==='/api/performance')return respond(res,200,memoryStatus());
       if(req.method==='GET'&&url.pathname==='/api/measurements')return respond(res,200,collector.measurements.list());
       if(req.method==='GET'&&['/api/measurements/export.csv','/api/measurements/export.json'].includes(url.pathname)){
         const ids=(q.ids||'').split(',').filter(Boolean);
@@ -82,7 +95,7 @@ async function startServer({dataDir,port=0,onError=()=>{},catalogDownload,update
       if(req.method==='POST'&&url.pathname==='/api/data/reset'){const b=await body(req);return respond(res,200,await serializeWrite(()=>collector.resetAll(b)));}
       if(req.method==='POST'&&url.pathname==='/api/scan'){await body(req);await serializeWrite(()=>collector.scan());return respond(res,200,{ok:true,updatedAt:collector.updatedAt});}
       if(req.method==='GET'&&['/api/status','/api/line'].includes(url.pathname)&&q.scope==='measurement'&&!collector.measurements.state.runs.some(r=>r.id===(q.measurement||collector.measurements.state.pinnedId))){q.scope='all';delete q.measurement;q.selectionNotice='선택했던 측정이 삭제되어 전체 누적으로 전환했습니다.';}
-      if(req.method==='GET'&&url.pathname==='/api/status')return respond(res,200,{...summarize(collector,q),...(q.includeMeasurements==='1'?{measurements:collector.measurements.list()}:{}),updates:updates.status(collector.config.appUpdates),demo:!!runtime.demo});
+      if(req.method==='GET'&&url.pathname==='/api/status')return respond(res,200,{...cachedSummary(q),...(q.includeMeasurements==='1'?{measurements:collector.measurements.list()}:{}),updates:updates.status(collector.config.appUpdates),demo:!!runtime.demo});
       if(req.method==='GET'&&url.pathname==='/api/reliability')return respond(res,200,{...require('./reliability').invariants(collector),sessions:require('./reliability').sessions(collector)});
       if(req.method==='GET'&&url.pathname==='/api/reliability/export')return respond(res,200,require('./reliability').diagnostics(collector));
       if(req.method==='POST'&&url.pathname==='/api/reliability/compare'){
@@ -101,10 +114,13 @@ async function startServer({dataDir,port=0,onError=()=>{},catalogDownload,update
       }
       if(req.method==='GET'&&['/api/history/export.jsonl','/api/history/export.csv'].includes(url.pathname)){
         const format=url.pathname.endsWith('.csv')?'csv':'jsonl';res.setHeader('Content-Disposition',`attachment; filename="token-meter-usage-history.${format}"`);
-        return respond(res,200,require('./history').exportHistory(collector,q,format),format==='csv'?'text/csv; charset=utf-8':'application/x-ndjson; charset=utf-8');
+        const chunks=require('./history').historyChunks(collector,q,format),first=chunks.next();
+        function* output(){if(!first.done)yield first.value;yield* chunks;}
+        res.writeHead(200,{'Content-Type':format==='csv'?'text/csv; charset=utf-8':'application/x-ndjson; charset=utf-8'});
+        await require('node:stream/promises').pipeline(require('node:stream').Readable.from(output(),{objectMode:false,highWaterMark:64*1024}),res);return;
       }
       if(req.method==='POST'&&url.pathname==='/api/antigravity/reanalyse'){await body(req);return respond(res,200,await serializeWrite(()=>collector.reanalyseAntigravity()));}
-      if(req.method==='GET'&&url.pathname==='/api/line')return respond(res,200,statusLine(summarize(collector,q)),'text/plain; charset=utf-8');
+      if(req.method==='GET'&&url.pathname==='/api/line')return respond(res,200,statusLine(cachedSummary({...q,view:'statusbar'})),'text/plain; charset=utf-8');
       if(req.method==='GET'&&url.pathname==='/api/prices')return respond(res,200,{builtin:[...BUILTIN,...require('../data/prices.extra.json').rules],remote:collector.catalog.rules(collector.config.catalogUpdates),custom:collector.customRules});
       if(req.method==='GET'&&url.pathname==='/api/catalog')return respond(res,200,collector.catalog.status(collector.config.catalogUpdates));
       if(req.method==='POST'&&url.pathname==='/api/catalog/refresh'){await body(req);await collector.catalog.refresh(collector.config.catalogUpdates,true);await serializeWrite(()=>collector.scan());return respond(res,200,collector.catalog.status(collector.config.catalogUpdates));}
@@ -114,8 +130,13 @@ async function startServer({dataDir,port=0,onError=()=>{},catalogDownload,update
       if(req.method==='POST'&&url.pathname==='/api/updates/download'){await body(req);return respond(res,200,await updates.download(collector.config.appUpdates));}
       if(req.method==='POST'&&url.pathname==='/api/updates/verified-path'){await body(req);return respond(res,200,await updates.verifiedPath(collector.config.appUpdates));}
       if(req.method==='GET'&&url.pathname==='/api/config')return respond(res,200,{...collector.config,dataDir});
-      if(req.method==='GET'&&url.pathname==='/api/export.csv'){res.setHeader('Content-Disposition','attachment; filename="token-meter.csv"');return respond(res,200,exportCsv(collector,q),'text/csv; charset=utf-8');}
-      if(req.method==='GET'&&url.pathname==='/api/export.json')return respond(res,200,{version:1,costLabel:collector.config.billingMode,events:filtered(collector,q).events});
+      if(req.method==='GET'&&['/api/export.csv','/api/export.json'].includes(url.pathname)){
+        const csv=url.pathname.endsWith('.csv'),generator=csv?require('./summary').exportCsvChunks:require('./summary').exportJsonChunks;
+        const chunks=generator(collector,q),first=chunks.next(); // Validate before sending HTTP headers.
+        res.writeHead(200,{'Content-Type':csv?'text/csv; charset=utf-8':'application/json; charset=utf-8','Content-Disposition':`attachment; filename="token-meter.${csv?'csv':'json'}"`});
+        function* output(){if(!first.done)yield first.value;yield* chunks;}
+        await require('node:stream/promises').pipeline(require('node:stream').Readable.from(output(),{objectMode:false,highWaterMark:65536}),res);return;
+      }
       if(req.method==='POST'&&url.pathname==='/api/task/start'){const b=await body(req);return respond(res,200,await serializeWrite(()=>collector.startTask(b.name,b.projectId)));}
       if(req.method==='POST'&&url.pathname==='/api/task/stop'){await body(req);return respond(res,200,await serializeWrite(()=>collector.stopTask()));}
       if(req.method==='POST'&&url.pathname==='/api/settings'){
@@ -131,7 +152,7 @@ async function startServer({dataDir,port=0,onError=()=>{},catalogDownload,update
       }
       if(req.method==='POST'&&url.pathname==='/api/shutdown'){await body(req);respond(res,200,{ok:true});setTimeout(()=>close().catch(onError),50);return;}
       return respond(res,404,{error:'찾을 수 없음'});
-    }catch(e){respond(res,400,{error:text(e.message,400)});}
+    }catch(e){if(res.headersSent||res.destroyed){res.destroy();return;}respond(res,400,{error:text(e.message,400)});}
   });
   server.requestTimeout=15000;server.headersTimeout=10000;
   try{

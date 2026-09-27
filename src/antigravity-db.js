@@ -33,28 +33,25 @@ async function pythonRead(file,commands) {
     try{
       await new Promise((resolve,reject)=>{
         const cp=spawn(command[0],[...command.slice(1),'-I',path.join(__dirname,'antigravity-sqlite.py'),file],{stdio:['ignore','pipe','ignore'],windowsHide:true});
-        let buffer=Buffer.alloc(0),done=false,error=null,total=0;
+        let done=false,error=null,total=0;
         const fail=e=>{if(!error){error=e;cp.kill();}};
-        cp.on('error',e=>{error=e;});
-        cp.stdout.on('data',chunk=>{
-          if(error)return;
-          total+=chunk.length;
-          if(total>MAX_BYTES*1.5+MAX_ROWS*256){fail(new Error('database-read-limit'));return;}
-          buffer=Buffer.concat([buffer,chunk]);let nl;
+        cp.on('error',fail);
+        const closed=new Promise(resolve=>cp.once('close',resolve));
+        const timer=setTimeout(()=>fail(new Error('database-timeout')),18000);
+        (async()=>{
           try{
-            while((nl=buffer.indexOf(10))>=0){
-              if(nl>MAX_BLOB*1.4+1024)throw new Error('database-read-limit');
-              const r=JSON.parse(buffer.subarray(0,nl).toString('utf8'));buffer=buffer.subarray(nl+1);
+            for await(const {line,complete} of require('./byte-lines').byteLines(cp.stdout,{maxBytes:Math.ceil(MAX_BLOB*1.4)+1024})){
+              total+=line.length+1;if(!complete||total>MAX_BYTES*1.5+MAX_ROWS*256)throw new Error('sqlite-bridge-protocol');
+              const r=JSON.parse(line.toString('utf8'));
               if(r.error)throw new Error(r.error);
               if(r.done){done=true;continue;}
               if(done||!['generation','step'].includes(r.kind)||typeof r.data!=='string')throw new Error('sqlite-bridge-protocol');
               s.feed(r.kind,r.idx,Buffer.from(r.data,'base64'));
             }
-            if(buffer.length>MAX_BLOB*1.4+1024)throw new Error('database-read-limit');
           }catch(e){fail(e);}
-        });
-        const timer=setTimeout(()=>fail(new Error('database-timeout')),18000);
-        cp.on('close',code=>{clearTimeout(timer);if(error)reject(error);else if(code!==0||!done||buffer.length)reject(new Error('sqlite-bridge-failed'));else resolve();});
+          const code=await closed;clearTimeout(timer);
+          if(error)reject(error);else if(code!==0||!done)reject(new Error('sqlite-bridge-failed'));else resolve();
+        })().catch(e=>{clearTimeout(timer);fail(e);reject(e);});
       });
       return s.finish('python-sqlite3');
     }catch(e){if(e.code==='ENOENT'||e.message==='sqlite-bridge-failed')continue;throw e;}
@@ -85,11 +82,17 @@ async function readDatabase(file,options={}){
   const before=await signature(file);
   const result=await new Promise((resolve,reject)=>{
     const w=new Worker(__filename,{workerData:{file,options}});
-    const timer=setTimeout(()=>{w.terminate();reject(new Error('database-timeout'));},20000);
-    let finished=false;
-    w.once('message',r=>{finished=true;clearTimeout(timer);if(r.error)reject(new Error(r.error));else resolve(r);});
-    w.once('error',e=>{clearTimeout(timer);reject(e);});
-    w.once('exit',code=>{clearTimeout(timer);if(!finished)reject(new Error(code?'sqlite-worker-error':'sqlite-worker-incomplete'));});
+    let result,failed;
+    const timer=setTimeout(()=>{failed=new Error('database-timeout');w.terminate();},20000);
+    w.on('message',r=>{
+      if(r.error){failed=new Error(r.error);return;}
+      if(r.kind==='begin'){result={...r.meta,events:[]};w.postMessage('ack');}
+      else if(r.kind==='events'&&result){result.events.push(...r.events);w.postMessage('ack');}
+      else if(r.kind==='complete'&&result){result._complete=true;}
+      else {failed=new Error('sqlite-worker-incomplete');w.terminate();}
+    });
+    w.once('error',e=>{failed=e;});
+    w.once('exit',code=>{clearTimeout(timer);if(failed)reject(failed);else if(!result?._complete||code!==0)reject(new Error('sqlite-worker-incomplete'));else {delete result._complete;resolve(result);}});
   });
   const after=await signature(file);
   return {...result,signature:before===after?after:null};
@@ -100,5 +103,12 @@ function safeError(e){
   if(/busy|locked/i.test(e.message))return 'database-busy';
   return 'database-read-error';
 }
-if(!isMainThread){scanInWorker(workerData.file,workerData.options).then(r=>parentPort.postMessage(r),e=>parentPort.postMessage({error:safeError(e)}));}
+async function sendSnapshot(r){
+  const {events,...meta}=r;
+  const send=message=>new Promise(resolve=>{parentPort.once('message',resolve);parentPort.postMessage(message);});
+  await send({kind:'begin',meta});
+  for(let i=0;i<events.length;i+=128){const end=Math.min(events.length,i+128);await send({kind:'events',events:events.slice(i,end)});events.fill(null,i,end);}
+  parentPort.postMessage({kind:'complete'});parentPort.close();
+}
+if(!isMainThread){scanInWorker(workerData.file,workerData.options).then(sendSnapshot).catch(e=>{parentPort.postMessage({error:safeError(e)});parentPort.close();});}
 module.exports={readDatabase,signature,scanInWorker,nativeRead,pythonRead,safeError};

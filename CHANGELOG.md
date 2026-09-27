@@ -1,3 +1,17 @@
+# 0.10.2 — Bounded memory and unchanged accounting / 2026-09-27
+
+- Start from the user's 0.10.1 upload; preserve mirrored primary/retry accounting, 16 MiB SQLite blobs, source identity repair and reset boundaries.
+- Stream existing ledger JSON on read/write; serialize saves at execution time instead of eagerly cloning the full ledger.
+- Keep a compact journal index, replay only newer revisions, and share exact immutable pricing/provenance under a bounded pool.
+- Preserve accountingVersion/usageSourceKind/usageObservedAt through journal and reset; do not turn correct records into legacy warnings.
+- Skip unchanged reset input and completed DB snapshots without suppressing warnings or needed repairs. Preserve WAL/manual-reanalysis invalidation.
+- Batch worker results with backpressure; assemble long Python IPC lines without repeated whole-prefix concatenation; await process/worker exit.
+- Add tiny authenticated version probes and lean, bounded cached statusbar queries with live health overlays.
+- Stream complete HTTP exports; use browser file streaming when supported and explicitly permitted, otherwise retain Blob fallback.
+- Coalesce UI refreshes, pause hidden-tab display requests without stopping collection, and expose collector RAM/save queue.
+- Keep prices and provider parser semantics; no history purge, downsampling, forced GC, heap-limit workaround or SQLite-ledger migration.
+- Document controlled 20,000-call before/after RSS and runtime tradeoffs, 431 Node tests and bounded browser-harness verification.
+
 # 0.10.1 — Antigravity mirrored usage repair / 2026-09-26
 
 - Treat an identical primary/retry observation with the same strong request identity as one call; keep distinct retries and generation rows separate.

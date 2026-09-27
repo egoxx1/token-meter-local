@@ -12,15 +12,16 @@ const {ensureSplit,SPLIT_KEYS}=require('./output-breakdown');
 const MAX_LINE = 16 * 1024 * 1024;
 class Collector {
   constructor(dataDir, options = {}) {
-    this.catalog = new Catalog(dataDir, options.catalogDownload); this.journal=new UsageLog(dataDir);this.repairs={};
+    this.metadataPool=new (require('./metadata-pool').MetadataPool)();this.dataVersion=0;
+    this.catalog = new Catalog(dataDir, options.catalogDownload); this.journal=new UsageLog(dataDir,{compact:true});this.repairs={};
     this.dataDir = path.resolve(dataDir); this.storageDir=this.dataDir;this.resetBoundary=null;this.sourceEvents=null;this.resetBaseline=null;this.resetDiagnostics={lateOld:0,undated:0}; this.events = new Map(); this.files = {};
     this.tasks = []; this.warnings = []; this.health = {}; this.inFlight = null;
     this.pendingSaves=0;this.pendingRetirements=new Map(); this.antigravityAliases = new Map(); this.updatedAt = null; this.scanning = false; this.scanStats = {}; this.dirty = false; this.saveQueue = Promise.resolve();
   }
   async init() {
     this.config = await initConfig(this.dataDir);
-    const storage=await require('./data-reset').resolveStorage(this.dataDir);this.storageDir=storage.directory;this.journal=new UsageLog(this.storageDir);
-    const saved = await readJson(path.join(this.storageDir, 'ledger.json'), null);
+    const storage=await require('./data-reset').resolveStorage(this.dataDir);this.storageDir=storage.directory;this.journal=new UsageLog(this.storageDir,{compact:true});
+    const saved = await require('./json-store').readLedger(path.join(this.storageDir,'ledger.json'),e=>this.metadataPool.event(e));
     if(storage.pointer){const checked=require('./data-reset').validateBoundary(saved?.resetBoundary,saved?.sourceEvents);if(saved.resetBoundary.id!==storage.pointer.id)throw new Error('초기화 활성 ID 불일치');this.resetBoundary=saved.resetBoundary;this.resetBaseline=checked.baseline;this.sourceEvents=checked.sources;}
     if (saved) {
       if (![1,2].includes(saved.version) || !Array.isArray(saved.events) || !saved.files) throw new Error('지원하지 않는 ledger.json. 원본을 보존하고 데이터 폴더를 확인하세요.');
@@ -34,12 +35,11 @@ class Collector {
       this.events = new Map(saved.events.map(e => [e.id, e])); for(const e of this.events.values())if(e.provider==='antigravity')for(const id of e.identityKeys||[])this.antigravityAliases.set(id,e.id); this.files = saved.files; this.tasks = saved.tasks || [];
     }
     if(this.sourceEvents)for(const e of this.sourceEvents.values())if(e.provider==='antigravity')for(const id of e.identityKeys||[])this.antigravityAliases.set(id,e.id);
-    await this.journal.init();
-    // A journal append is fsynced before the ledger checkpoint is replaced.
-    // Replay only newer revisions after a crash; replay all if the ledger was lost.
-    for(const r of this.journal.latest.values())if(r.seq>(saved?.journalSequence||0)) {
-      if(r.event.retired)this.events.delete(r.id);else this.events.set(r.id,structuredClone(r.event));this.dirty=true;
-    }
+    // Keep only journal revision/fingerprint metadata, replaying records directly
+    // into the existing ledger map instead of retaining a second full history.
+    await this.journal.init({afterSequence:saved?.journalSequence||0,onRecord:r=>{
+      if(r.event.retired)this.events.delete(r.id);else this.events.set(r.id,this.metadataPool.event(r.event));this.dirty=true;
+    }});
     this.repairs=saved?.repairs||{};await require('./identity-repair').loadPlans(this);
     if([...(this.sourceEvents||this.events).values()].some(require('./identity-repair').isLegacy))await require('./identity-repair').backup(this);
     if(saved&&!this.repairs.rateBindingV1){
@@ -102,23 +102,35 @@ class Collector {
     if(!this.repairs.outputV1){this.repairs.outputV1=new Date().toISOString();this.dirty=true;}
     if(!this.repairs.pricingV2){this.repairs={...this.repairs,pricingV2:new Date().toISOString(),mappedModels:mapped};this.dirty=true;}
 
+    for(const e of this.events.values())this.metadataPool.event(e);
     if(this.dirty) await this.save();
     return this;
   }
   pricingRules() { return [...this.catalog.rules(this.config.catalogUpdates), ...this.customRules]; }
   async save() {
-    // Freeze one coherent snapshot before any await. Queue writes to prevent stale task/scan saves winning.
-    const snapshot = structuredClone({ version: 2, repairs:this.repairs, events: [...this.events.values()], files: this.files, tasks: this.tasks, ...(this.resetBoundary?{resetBoundary:this.resetBoundary,sourceEvents:[...this.sourceEvents.values()]}:{}) });
-    const retirements=[...this.pendingRetirements.values()];
-    this.dirty = false;
     this.pendingSaves++;
-    const writing = this.saveQueue.catch(() => {}).then(async() => { snapshot.journalSequence=await this.journal.sync([...retirements,...snapshot.events]);await atomicJson(path.join(this.storageDir, 'ledger.json'), snapshot); });
-    this.saveQueue = writing;
-    try { await writing; for(const e of retirements)if(this.pendingRetirements.get(e.id)===e)this.pendingRetirements.delete(e.id); } catch (e) { this.dirty = true; throw e; } finally { this.pendingSaves--; }
+    const writing=this.saveQueue.catch(()=>{}).then(async()=>{
+      for(const e of this.events.values())this.metadataPool.event(e);
+      if(this.sourceEvents)for(const e of this.sourceEvents.values())this.metadataPool.event(e);
+      // Capture counters/arrays at queue execution. Immutable price metadata may be
+      // shared safely instead of deep-copying the full ledger graph for every save.
+      const copyEvent=e=>Object.fromEntries(Object.entries(e).map(([k,v])=>[k,Array.isArray(v)?v.slice():v&&typeof v==='object'&&!Object.isFrozen(v)?structuredClone(v):v]));
+      const snapshot={version:2,...structuredClone({repairs:this.repairs,files:this.files,tasks:this.tasks}),events:[...this.events.values()].map(copyEvent),
+        ...(this.resetBoundary?{resetBoundary:structuredClone(this.resetBoundary),sourceEvents:[...this.sourceEvents.values()].map(copyEvent)}:{})};
+      const retirements=[...this.pendingRetirements.values()];this.dirty=false;this.dataVersion++;
+      try{
+        snapshot.journalSequence=await this.journal.sync((function*(){yield* retirements;yield* snapshot.events;})());
+        await require('./json-store').atomicLedger(path.join(this.storageDir,'ledger.json'),snapshot);
+        for(const e of retirements)if(this.pendingRetirements.get(e.id)===e)this.pendingRetirements.delete(e.id);
+      }catch(e){this.dirty=true;throw e;}
+    });
+    this.saveQueue=writing;
+    try{await writing;}finally{this.pendingSaves--;}
   }
   insert(e) {
     if(!this.resetBoundary)return this._insertRaw(e,this.events);
-    this._insertRaw(e,this.sourceEvents);
+    const changed=this._insertRaw(e,this.sourceEvents);
+    if(!changed)return;
     const raw=this.sourceEvents.get(e.id);if(!raw)return;
     const b=this.resetBaseline.get(raw.id);
     if(!b&&(!raw.timestamp||raw.timestamp<this.resetBoundary.startedAt)) {
@@ -135,7 +147,7 @@ class Collector {
     d.resetEpochId=this.resetBoundary.id;d.resetDelta=!!b;
     if(b&&raw.timestamp<this.resetBoundary.startedAt){d.sourceTimestamp=raw.timestamp;d.timestamp=this.resetBoundary.startedAt;d.warnings=[...new Set([...d.warnings,'reset-boundary-observed-delta'])];}
     const old=this.events.get(d.id);d.firstObservedAt=old?.firstObservedAt||new Date().toISOString();
-    this.events.set(d.id,d);this.dirty=true;
+    this.events.set(d.id,this.metadataPool.event(d));this.dirty=true;
   }
   _insertRaw(e, store) {
     ensureSplit(e);
@@ -181,7 +193,7 @@ class Collector {
     e.price = priceEvent(e, this.activeRules, existingRate);
     if(!e.price.binding.rejected&&old?.price?.binding?.rejected)e.price.binding.rejected=old.price.binding.rejected;
     e.firstObservedAt = old?.firstObservedAt || new Date().toISOString();e.lastObservedAt=new Date().toISOString();
-    store.set(e.id, e); if(e.provider==='antigravity')for(const id of e.identityKeys||[])this.antigravityAliases.set(id,e.id); this.scanStats.upserts++; this.dirty = true;
+    this.metadataPool.event(e);store.set(e.id, e); if(e.provider==='antigravity')for(const id of e.identityKeys||[])this.antigravityAliases.set(id,e.id); this.scanStats.upserts++; this.dataVersion++; this.dirty = true;return true;
   }
   async walk(root, provider, out, depth = 0) {
     if (depth > this.config.maxDepth) { (this.scanHealth||this.health)[provider].limited = true; return; }
@@ -236,7 +248,7 @@ class Collector {
     };
     try{
       const sig=await signature(file);
-      if(old?.dbSignature===sig&&!old.partial&&old.parserVersion===5){apply(old);return;}
+      if(old?.dbSignature===sig&&old.parserVersion===5&&!this.repairSessions?.has('antigravity:'+path.basename(file,'.db'))){apply(old);return;}
       const r=await readDatabase(file);
       const repaired=await require('./identity-repair').repairSession(this,r,'antigravity:'+path.basename(file,'.db'));
       const accountingRepaired=await require('./identity-repair').repairSession(this,r,'antigravity:'+path.basename(file,'.db'),'accountingV2');
@@ -304,6 +316,10 @@ class Collector {
       }
     } catch (e) { this.warnings.push(e.message + ' · 직전 정상 단가 유지'); }
     this.scanHealth = Object.fromEntries(PROVIDERS.map(p => [p, { rootsFound: 0, files: 0, errors: 0, oversizedFiles: 0, limited: false }]));
+    // A stable file signature must never suppress a required identity/accounting repair.
+    this.repairSessions=new Set();
+    for(const e of (this.sourceEvents||this.events).values())if(e.provider==='antigravity'&&(e.identityVersion!==4||e.accountingVersion!==2))this.repairSessions.add(e.sessionId);
+    for(const kind of ['identityV4','accountingV2'])for(const [id,r] of Object.entries(this.repairs[kind]?.sessions||{}))if(r.status==='pending-durable-rebuild')this.repairSessions.add(id);
     const found = [];
     for (const p of PROVIDERS) for (const root of this.config.roots[p]) {
       // Refuse root symlinks too, so a configured tree does not escape through symlink traversal.

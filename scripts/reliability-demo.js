@@ -23,6 +23,6 @@ const {startServer}=require('../src/server');
  await atomicJson(path.join(storage,'measurements.json'),{version:1,runs:[],pinnedId:null,undo:null});
  await atomicJson(path.join(data,'active-data.json'),{version:1,id,startedAt});
  const server=await startServer({dataDir:data,onError:e=>console.error(e.message)});
- console.log(JSON.stringify({dataDir:data,synthetic:true,version:'0.10.1'}));
+ console.log(JSON.stringify({dataDir:data,synthetic:true,version:'0.10.2'}));
  process.on('SIGTERM',()=>server.close().then(()=>process.exit(0)));process.on('SIGINT',()=>server.close().then(()=>process.exit(0)));
 })().catch(e=>{console.error(e);process.exit(1);});

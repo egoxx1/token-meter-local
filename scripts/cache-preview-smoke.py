@@ -1,4 +1,4 @@
-"""0.10.1 preview/cache-evidence UI acceptance tests against an isolated, synthetic local demo.
+"""0.10.2 preview/cache-evidence UI acceptance tests against an isolated, synthetic local demo.
 Python Playwright and Chromium are test-only dependencies. --offline uses
 about:blank + a restricted fetch bridge; it is not browser-navigation/CSP proof.
 Never run on user data: the demo flag is mandatory and tests reset active data.
@@ -54,7 +54,7 @@ with sync_playwright() as pw:
     assert math.isclose(s['totalUsd'],.7844112,abs_tol=1e-12)
     assert s['inputBreakdown']['cacheWriteUnreportedRecords']==10
     passed('User-provided aggregate reproduced with ten synthetic requests: 2,469,356 tokens / $0.7844112 reference cost')
-    assert '0.10.1' in page.locator('#app-version').inner_text()
+    assert '0.10.2' in page.locator('#app-version').inner_text()
     assert not page.locator('#version-warning').is_visible()
     assert '2,469,356' in page.locator('#overview-tokens').inner_text()
     assert '참고' in page.locator('#overview-basis').inner_text()

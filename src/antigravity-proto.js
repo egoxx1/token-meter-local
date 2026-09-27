@@ -257,7 +257,7 @@ class Snapshot {
       old.identityKeys=[...old.sourceRowKeys];
     };
     for(const c of this.candidates.filter(c=>c.event.sourceKind==='generation')) {
-      const e=structuredClone(c.event),old=bySlot.get(e.id);
+      const e={...c.event,warnings:[...c.event.warnings],identityKeys:[...c.event.identityKeys],sourceRowKeys:[...c.event.sourceRowKeys],requestIdentityKeys:[...c.event.requestIdentityKeys]},old=bySlot.get(e.id);
       if(old){stats.invalidRows++;merge(old,e);continue;}
       events.push(e);bySlot.set(e.id,e);stats.uniqueGenerations++;
       for(const k of e.requestIdentityKeys)index(byRequest,k,e);
@@ -266,7 +266,7 @@ class Snapshot {
     for(const [key,targets]of byRequest)if(targets.size>1){stats.reusedRequestKeys++;for(const e of targets)e.warnings.push('antigravity-reused-request-id');}
     const standalone=new Map();
     for(const c of this.candidates.filter(c=>c.event.sourceKind==='step')){
-      const e=structuredClone(c.event);
+      const e={...c.event,warnings:[...c.event.warnings],identityKeys:[...c.event.identityKeys],sourceRowKeys:[...c.event.sourceRowKeys],requestIdentityKeys:[...c.event.requestIdentityKeys]};
       const targets=new Set();let ambiguous=false;
       // A generation's explicit step index is stronger than a response ID that
       // another invocation reused. It also links identity-less observations.
